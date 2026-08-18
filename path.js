@@ -7,6 +7,16 @@ cardPicPaths = `{
 		},
 		"title":"Happy Anniversary"
 	},
+	"graduation": {
+		"img":{
+			"1": "../res/graduation/1.svg",
+			"2": "../res/graduation/2.svg",
+			"3": "../res/graduation/3.svg",
+			"4": "../res/graduation/4.svg",
+			"5": "../res/graduation/5.svg"
+		},
+		"title":"Chúc Mừng Tốt Nghiệp"
+	},
 	"birthday": {
 		"img":{
 			"1": "../res/birthday/1.png",

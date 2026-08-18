@@ -39,20 +39,37 @@ function genCards(){
     frame.innerHTML = chosen
 }
 
-function selectCard(no){
+async function selectCard(no){
     const templ = no
     const cname = document.getElementById("cname").value
     const ctext = document.getElementById("ctext").value
     const ctype = document.getElementById("ctype").value
     const res = document.getElementById("resultlink")
 
-    const enc_cname = encodeURI(window.btoa(cname))
-    const enc_ctext = encodeURI(window.btoa(ctext))
+    let temp
 
-    // temp = window.location.origin + `/templates/1.html?card=${ctype}&name=${enc_cname}&text=${enc_ctext}&templ=${templ}`    // for local
-    temp = window.location.href + `templates/1.html?card=${ctype}&name=${enc_cname}&text=${enc_ctext}&templ=${templ}`    // for github
+    if (supabaseClient) {
+        const { data, error } = await supabaseClient
+            .from("events")
+            .insert({ card_type: ctype, template_no: templ, host_name: cname, message: ctext })
+            .select()
+            .single()
+
+        if (error) {
+            document.getElementById("msg").innerText = "Có lỗi khi tạo thiệp, thử lại sau."
+            console.error(error)
+            return
+        }
+
+        temp = new URL(`templates/1.html?event=${data.id}`, window.location.href).href
+    } else {
+        // Fallback: no backend configured, keep the original base64-in-URL behavior
+        const enc_cname = encodeURI(window.btoa(cname))
+        const enc_ctext = encodeURI(window.btoa(ctext))
+        temp = new URL(`templates/1.html?card=${ctype}&name=${enc_cname}&text=${enc_ctext}&templ=${templ}`, window.location.href).href
+    }
+
     res.value = temp
-    
 
     // Generate QR code
 
