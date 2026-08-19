@@ -16,6 +16,12 @@ const guestId = urlParams.get('guest')
 
 const TYPE_ICONS = { graduation: "🎓", birthday: "🎂", anniversary: "💐", thankyou: "🙏" }
 
+// Set by renderMusic()/renderYoutubeMusic() once the music source is ready.
+// Tapping the card to open it is a real user gesture, so calling this from
+// inside that same click handler is what lets the browser allow autoplay
+// with sound — a later, unrelated call (e.g. on a timer) would be blocked.
+let startMusicFn = null
+
 function renderCard(utype, utempl, uname, utext, photoUrl){
     const clist = Object.values(cardDATA[utype]["img"])
     const getInnerTitle = cardDATA[utype]["title"]
@@ -42,6 +48,11 @@ function renderCard(utype, utempl, uname, utext, photoUrl){
             // Everything below the card (RSVP, guestbook...) is easy to miss —
             // nudge the guest to scroll once the flip animation settles.
             setTimeout(() => document.getElementById("scroll-hint").classList.add("visible"), 3000)
+
+            if (startMusicFn) {
+                startMusicFn()
+                startMusicFn = null // only auto-start once, on the opening tap
+            }
         } else {
             document.getElementById("scroll-hint").classList.remove("visible")
         }
@@ -150,15 +161,18 @@ function renderMusic(musicUrl){
     `
     const audio = document.getElementById("bg-audio")
     const btn = document.getElementById("music-toggle")
+
+    // Button text always reflects the audio element's real state, whether
+    // playback started from the auto-open tap, the button itself, or got
+    // blocked by the browser (in which case it just stays "🔊 Nhạc nền").
+    audio.addEventListener("play", () => btn.textContent = "🔇 Tắt nhạc")
+    audio.addEventListener("pause", () => btn.textContent = "🔊 Nhạc nền")
+
     btn.addEventListener("click", () => {
-        if (audio.paused) {
-            audio.play()
-            btn.textContent = "🔇 Tắt nhạc"
-        } else {
-            audio.pause()
-            btn.textContent = "🔊 Nhạc nền"
-        }
+        if (audio.paused) audio.play(); else audio.pause()
     })
+
+    startMusicFn = () => audio.play().catch(() => {})
 }
 
 function renderYoutubeMusic(youtubeId, startSec, endSec){
@@ -173,6 +187,7 @@ function renderYoutubeMusic(youtubeId, startSec, endSec){
     const end = endSec || null
     let player = null
     let playing = false
+    let autoplayPending = false
 
     function checkLoop(){
         if (player && end && player.getCurrentTime() >= end) {
@@ -180,6 +195,13 @@ function renderYoutubeMusic(youtubeId, startSec, endSec){
         }
         if (playing) setTimeout(checkLoop, 1000)
     }
+
+    function startPlaying(){
+        if (!player) { autoplayPending = true; return }
+        player.playVideo()
+    }
+
+    startMusicFn = startPlaying
 
     function init(){
         if (typeof YT === "undefined" || !YT.Player) {
@@ -192,17 +214,19 @@ function renderYoutubeMusic(youtubeId, startSec, endSec){
             events: {
                 onReady: () => {
                     btn.addEventListener("click", () => {
-                        if (!playing) {
-                            player.playVideo()
-                            playing = true
-                            btn.textContent = "🔇 Tắt nhạc"
-                            checkLoop()
-                        } else {
-                            player.pauseVideo()
-                            playing = false
-                            btn.textContent = "🔊 Nhạc nền"
-                        }
+                        if (!playing) player.playVideo(); else player.pauseVideo()
                     })
+                    if (autoplayPending) player.playVideo()
+                },
+                onStateChange: (e) => {
+                    if (e.data === YT.PlayerState.PLAYING) {
+                        playing = true
+                        btn.textContent = "🔇 Tắt nhạc"
+                        checkLoop()
+                    } else if (e.data === YT.PlayerState.PAUSED || e.data === YT.PlayerState.ENDED) {
+                        playing = false
+                        btn.textContent = "🔊 Nhạc nền"
+                    }
                 }
             }
         })
