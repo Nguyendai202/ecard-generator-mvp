@@ -11,7 +11,7 @@ document.getElementById("copybtn").addEventListener("click",
         const t = document.getElementById("resultlink")
         t.select()
         document.execCommand("copy");
-        alert("URL copied");
+        alert("Đã sao chép link");
     });
 
 function renderWishSuggestions(){
@@ -53,8 +53,8 @@ function genCards(){
                 <div class="card h-100">
                     <img src="${clist[a].slice(1)}" class="card-img-top" alt="card">
                     <div class="card-body">
-                        <h4>Card ${a}</h4><br>
-                        <a onclick="selectCard(${a})" class="btn btn-warning" >Select this</a>
+                        <h4>Mẫu ${a + 1}</h4><br>
+                        <a onclick="selectCard(${a})" class="btn btn-warning" >Chọn mẫu này</a>
                     </div>
                 </div>
             </div> `
@@ -272,7 +272,7 @@ async function selectCard(no){
         const temp = new URL(`templates/1.html?card=${ctype}&name=${enc_cname}&text=${enc_ctext}&templ=${templ}`, window.location.href).href
         showSingleLink(temp)
         singleLinkBlock.style.display = ""
-        document.getElementById("msg").innerText = `Card ${templ} is Selected. Send the link or the QR Code to the person`
+        document.getElementById("msg").innerText = `Đã chọn Mẫu ${templ + 1}. Gửi link hoặc mã QR cho người nhận nhé!`
         return
     }
 
@@ -305,7 +305,7 @@ async function selectCard(no){
         singleLinkBlock.style.display = ""
         const temp = new URL(`templates/1.html?event=${eventId}`, window.location.href).href
         showSingleLink(temp)
-        document.getElementById("msg").innerText = `Card ${templ} is Selected. Send the link or the QR Code to the person`
+        document.getElementById("msg").innerText = `Đã chọn Mẫu ${templ + 1}. Gửi link hoặc mã QR cho người nhận nhé!`
         return
     }
 
@@ -329,11 +329,11 @@ async function selectCard(no){
             <div class="input-group mb-2">
                 <span class="input-group-text">${g.guest_name}</span>
                 <input type="text" class="form-control" readonly value="${link}">
-                <button class="btn btn-outline-secondary" type="button" onclick="navigator.clipboard.writeText('${link}')">Copy</button>
+                <button class="btn btn-outline-secondary" type="button" onclick="navigator.clipboard.writeText('${link}')">Sao chép</button>
             </div>`
     }).join("")
 
-    document.getElementById("msg").innerText = `Card ${templ} is Selected. Gửi link riêng cho từng khách ở trên.`
+    document.getElementById("msg").innerText = `Đã chọn Mẫu ${templ + 1}. Gửi link riêng cho từng khách ở trên.`
 }
 
 function showSingleLink(temp){

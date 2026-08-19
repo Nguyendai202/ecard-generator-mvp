@@ -1,0 +1,152 @@
+@import url("https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,400;0,500;0,600;0,700&display=swap");
+body {
+  font-family: "Poppins", sans-serif;
+  background: linear-gradient(180deg, #f3e8ff 0%, #fdf2f8 40%, #fff7ed 100%);
+  color: #3a3550;
+}
+
+.navbar {
+  background: linear-gradient(135deg, #8100eb 0%, #b33bff 100%) !important;
+  box-shadow: 0 2px 12px rgba(129, 0, 235, 0.25);
+}
+.navbar .navbar-brand {
+  font-weight: 700;
+  letter-spacing: 0.3px;
+}
+
+.hero {
+  text-align: center;
+  padding: 2.2rem 1rem 1rem;
+}
+.hero h1 {
+  font-size: 1.7rem;
+  font-weight: 700;
+  color: #3a3550;
+  margin-bottom: 0.4rem;
+}
+.hero p {
+  color: #7a7290;
+  font-size: 0.95rem;
+}
+
+.form-shell {
+  max-width: 720px;
+}
+
+.form-card {
+  border: none;
+  border-radius: 20px;
+  box-shadow: 0 12px 40px rgba(129, 0, 235, 0.12);
+  overflow: hidden;
+}
+
+.form-card .card-header {
+  display: none;
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #8100eb;
+  margin: 1.6rem 0 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.section-title:first-child {
+  margin-top: 0;
+}
+.section-title .step-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #8100eb, #b33bff);
+  color: #fff;
+  font-size: 0.75rem;
+  flex: none;
+}
+
+label {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #5b5470;
+  margin-bottom: 0.3rem;
+}
+
+.form-control, select#ctype {
+  border-radius: 10px;
+  border: 1px solid #e5d9f2;
+  font-family: inherit;
+  font-size: 0.9rem;
+}
+.form-control:focus, select#ctype:focus {
+  border-color: #8100eb;
+  box-shadow: 0 0 0 3px rgba(129, 0, 235, 0.12);
+}
+
+.form-text-hint {
+  font-size: 0.78rem;
+  color: #9089a3;
+}
+
+.btn-brand {
+  background: linear-gradient(135deg, #8100eb 0%, #b33bff 100%);
+  border: none;
+  color: #fff;
+  font-weight: 600;
+  padding: 0.65rem 1.6rem;
+  border-radius: 999px;
+  box-shadow: 0 6px 16px rgba(129, 0, 235, 0.3);
+  cursor: pointer;
+  display: inline-block;
+  text-decoration: none;
+}
+.btn-brand:hover {
+  opacity: 0.92;
+  color: #fff;
+}
+
+.gen-card .card {
+  border: none;
+  border-radius: 14px;
+  box-shadow: 0 6px 20px rgba(129, 0, 235, 0.1);
+  overflow: hidden;
+  transition: transform 0.15s;
+}
+.gen-card .card:hover {
+  transform: translateY(-3px);
+}
+
+.gen-card .btn-warning {
+  background: #ffe6a3;
+  border: none;
+  color: #6b4e00;
+  font-weight: 600;
+  border-radius: 999px;
+}
+
+.card-footer {
+  background: #faf7ff;
+  border-top: 1px solid #eee3fa;
+}
+
+.afterparty-box {
+  background: #fdf2f8;
+  border-radius: 12px;
+  padding: 0.8rem 1rem;
+  margin-top: 0.6rem;
+}
+.afterparty-box .form-check-label {
+  font-size: 0.85rem;
+}
+
+.site-footer {
+  background: linear-gradient(135deg, #8100eb 0%, #b33bff 100%) !important;
+}
+
+/*# sourceMappingURL=creator.css.map */

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 	<head>
 		<meta charset="UTF-8" />
 		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
@@ -10,37 +10,48 @@
 			integrity="sha384-eOJMYsd53ii+scO/bJGFsiCZc+5NDVN2yr8+0RDqr0Ql0h+rP48ckxlpbzKgwra6"
 			crossorigin="anonymous"
 		/>
-		<title>E-Card Generator | Ronik Bhattacharjee</title>
+		<link rel="stylesheet" href="./css/creator.css" />
+		<title>Thiệp Mời Online — Tạo thiệp mời miễn phí</title>
 	</head>
 
 	<body>
 
-        <nav class="navbar navbar-dark bg-primary">
-            <a class="navbar-brand container" href="#">E-Card Generator</a>
+        <nav class="navbar navbar-dark">
+            <a class="navbar-brand container" href="#">🎓 Thiệp Mời Online</a>
         </nav>
 
-        <div class="container mt-5">
-            <div class="card m-auto col-md-8">
-                <div class="card-header h5 p-3">Enter details to generate your E-Card</div>
-                <div class="card-body">
+        <div class="hero">
+            <h1>Tạo thiệp mời tốt nghiệp trong 1 phút</h1>
+            <p>Miễn phí • Có QR code • Xác nhận tham dự trực tuyến</p>
+        </div>
+
+        <div class="container mt-3 mb-5">
+            <div class="card form-shell form-card m-auto">
+                <div class="card-body p-4">
                     <div id="myform">
 
                         <!-- NAME -->
 
+                        <div class="section-title"><span class="step-num">1</span> Thông tin thiệp</div>
+
                         <div class="form-group">
-                          <input placeholder="Name of the person" type="name" class="form-control" id="cname">
+                            <label for="cname">Tên của bạn</label>
+                            <input placeholder="VD: Nguyễn Văn A" type="text" class="form-control" id="cname">
                         </div>
                         <br>
 
                         <!-- TEXT -->
 
                         <div class="form-group">
-                            <textarea required rows="4" placeholder="What do you want to write on the card ?" type="text" class="form-control" id="ctext"></textarea>
+                            <label for="ctext">Lời mời / lời chúc</label>
+                            <textarea required rows="4" placeholder="Bạn muốn viết gì trên thiệp?" class="form-control" id="ctext"></textarea>
                             <div id="wish-suggestions" class="mt-2"></div>
                         </div>
                         <br>
 
                         <!-- EVENT DETAILS -->
+
+                        <div class="section-title"><span class="step-num">2</span> Thời gian &amp; địa điểm</div>
 
                         <div class="row">
                             <div class="form-group col-md-4">
@@ -70,15 +81,29 @@
                         <div class="form-group">
                             <div class="form-check">
                                 <input type="checkbox" class="form-check-input" id="cafterparty-toggle">
-                                <label class="form-check-label" for="cafterparty-toggle">Có rủ đi ăn/tụ tập sau đó không? (khách sẽ tự tick riêng, không gộp vào RSVP tham dự chính)</label>
+                                <label class="form-check-label" for="cafterparty-toggle">Có rủ đi ăn / tụ tập sau đó không?</label>
                             </div>
-                            <input type="text" class="form-control mt-2" id="cafterparty-note" placeholder="VD: Ăn tối tại quán ABC sau lễ, ai rảnh thì đi cùng nhé" style="display:none">
+                            <div class="afterparty-box" id="cafterparty-box" style="display:none">
+                                <input type="text" class="form-control" id="cafterparty-note" placeholder="VD: Ăn tối tại quán ABC sau lễ, ai rảnh thì đi cùng nhé">
+                                <p class="form-text-hint mb-0 mt-1">Khách sẽ tự tick riêng mục này, không gộp vào việc xác nhận tham dự chính.</p>
+                            </div>
+                        </div>
+                        <br>
+
+                        <!-- PERSONALIZE -->
+
+                        <div class="section-title"><span class="step-num">3</span> Cá nhân hoá</div>
+
+                        <div class="form-group">
+                            <label for="cphoto">Ảnh cá nhân (tuỳ chọn, tối đa 5MB)</label>
+                            <input type="file" class="form-control" id="cphoto" accept="image/png,image/jpeg,image/webp,image/gif">
+                            <img id="cphoto-preview" style="display:none;max-width:150px;margin-top:8px;border-radius:8px">
                         </div>
                         <br>
                         <div class="form-group">
                             <label for="cmusicfile">Nhạc nền (tuỳ chọn, mp3/mp4, tối đa 20MB)</label>
                             <input type="file" class="form-control" id="cmusicfile" accept="audio/mpeg,audio/mp4,video/mp4">
-                            <small class="text-muted">Không hỗ trợ dán link YouTube (vi phạm điều khoản YouTube). Tải/convert file mp3 ở nơi khác rồi upload vào đây.</small>
+                            <p class="form-text-hint mb-0">Không hỗ trợ dán link YouTube (vi phạm điều khoản YouTube). Tải/convert file mp3 ở nơi khác rồi upload vào đây.</p>
                             <div id="music-trim-ui" style="display:none;margin-top:10px">
                                 <audio id="music-preview" controls style="width:100%"></audio>
                                 <div class="d-flex align-items-center gap-2 mt-2">
@@ -92,32 +117,33 @@
                                     <span id="trim-end-label">0:00</span>
                                 </div>
                                 <a onclick="previewTrim()" class="btn btn-sm btn-outline-primary mt-1">▶ Nghe thử đoạn đã chọn</a>
-                                <p class="text-muted mb-0"><small>Đoạn cắt tối đa 60 giây, sẽ tự động cắt khi bạn tạo thiệp.</small></p>
+                                <p class="form-text-hint mb-0">Đoạn cắt tối đa 60 giây, sẽ tự động cắt khi bạn tạo thiệp.</p>
                             </div>
                         </div>
                         <br>
-                        <div class="form-group">
-                            <label for="cphoto">Ảnh cá nhân (tuỳ chọn, tối đa 5MB)</label>
-                            <input type="file" class="form-control" id="cphoto" accept="image/png,image/jpeg,image/webp,image/gif">
-                            <img id="cphoto-preview" style="display:none;max-width:150px;margin-top:8px;border-radius:8px">
-                        </div>
-                        <br>
+
+                        <!-- GUESTS -->
+
+                        <div class="section-title"><span class="step-num">4</span> Khách mời</div>
+
                         <div class="form-group">
                             <label for="cguests">Danh sách khách mời (tuỳ chọn, mỗi khách 1 dòng)</label>
                             <textarea rows="3" class="form-control" id="cguests" placeholder="Để trống nếu muốn dùng 1 link chung cho tất cả khách.&#10;Nếu điền: Tên | Mối quan hệ (tuỳ chọn) — mỗi khách 1 dòng.&#10;VD:&#10;Nguyễn Văn B | bạn thân&#10;Cô Lan | thầy cô&#10;Chị Hoa"></textarea>
-                            <small class="text-muted">Ghi mối quan hệ (bạn thân/thầy cô/gia đình/đồng nghiệp...) để lời chào trên thiệp của từng khách phù hợp hơn — không bắt buộc.</small>
+                            <p class="form-text-hint mb-0">Ghi mối quan hệ (bạn thân/thầy cô/gia đình/người yêu...) để lời chào trên thiệp của từng khách phù hợp hơn — không bắt buộc.</p>
                         </div>
                         <br>
 
                         <!-- TYPE -->
 
+                        <div class="section-title"><span class="step-num">5</span> Chọn loại &amp; mẫu thiệp</div>
+
                         <div class="form-group">
-                            <label for="ctype">What card do you want to gift ?  </label>
-                            <select id="ctype">
-                                
+                            <label for="ctype">Bạn muốn tạo loại thiệp nào?</label>
+                            <select id="ctype" class="form-control">
+
                             </select>
-                            <br><br>
-                            <a onclick="genCards()" class="btn btn-primary">See templates</a>
+                            <br>
+                            <a onclick="genCards()" class="btn-brand">Xem mẫu thiệp</a>
                         </div>
                         <hr>
 
@@ -136,7 +162,7 @@
                         <div class="input-group mb-3">
                             <input id="resultlink" type="text" class="form-control">
                             <div class="input-group-append">
-                              <button id="copybtn" class="btn btn-outline-secondary" type="button">Copy URL</button>
+                              <button id="copybtn" class="btn btn-outline-secondary" type="button">Sao chép link</button>
                             </div>
                         </div>
                         <canvas id="qr"></canvas>
@@ -146,8 +172,8 @@
             </div>
         </div>
 
-        <div style="background-color: #0D6EFD; color: #fff;" class="mt-3 py-3 text-center">
-            Copyright &copy; 2021 - <a style="text-decoration: none; color: #fff;" href="https://github.com/Ronik22">Ronik Bhattacharjee</a>
+        <div class="site-footer text-center py-3" style="color:#fff">
+            <small>Bản quyền &copy; 2026 — Thiệp Mời Online</small>
         </div>
 
 		<script
@@ -164,7 +190,7 @@
         <script src="./js/creator.js"></script>
         <script>
             document.getElementById("cafterparty-toggle").addEventListener("change", function(){
-                document.getElementById("cafterparty-note").style.display = this.checked ? "" : "none"
+                document.getElementById("cafterparty-box").style.display = this.checked ? "" : "none"
             })
         </script>
 	</body>
