@@ -3,7 +3,7 @@ const cardDATA = JSON.parse(cardPicPaths);
 const ctype = document.getElementById("ctype")
 const ctypeArray = Object.keys(cardDATA)
 for(let k=0; k<ctypeArray.length; k++) {
-    ctype.innerHTML += `<option value="${ctypeArray[k]}">${cardDATA[ctypeArray[k]]["title"]} card</option>`
+    ctype.innerHTML += `<option value="${ctypeArray[k]}">${cardDATA[ctypeArray[k]]["title"]}</option>`
 }
 
 document.getElementById("copybtn").addEventListener("click",

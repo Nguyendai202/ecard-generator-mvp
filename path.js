@@ -1,12 +1,4 @@
 cardPicPaths = `{
-	"anniversary": {
-		"img":{
-			"1": "../res/anniversary/1.png",
-			"2": "../res/anniversary/2.png",
-			"3": "../res/anniversary/3.png"
-		},
-		"title":"Happy Anniversary"
-	},
 	"graduation": {
 		"img":{
 			"1": "../res/graduation/1.svg",
@@ -29,7 +21,15 @@ cardPicPaths = `{
 			"8": "../res/birthday/8.png",
 			"9": "../res/birthday/9.png"
 		},
-		"title":"Happy Birthday"
+		"title":"Sinh Nhật"
+	},
+	"anniversary": {
+		"img":{
+			"1": "../res/anniversary/1.png",
+			"2": "../res/anniversary/2.png",
+			"3": "../res/anniversary/3.png"
+		},
+		"title":"Kỷ Niệm"
 	},
 	"thankyou": {
 		"img":{
@@ -39,6 +39,6 @@ cardPicPaths = `{
 			"4": "../res/thankyou/4.png",
 			"5": "../res/thankyou/5.png"
 		},
-		"title":"Thank You"
+		"title":"Cảm Ơn"
 	}
 }`
