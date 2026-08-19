@@ -82,6 +82,9 @@ body {
   padding: 16px;
   border: 4px solid #fff;
 }
+.page__1 > * {
+  transition: opacity 0.3s;
+}
 .page__1::after {
   content: attr(data-flipicon);
   display: flex;
@@ -142,6 +145,10 @@ body {
 .page.flipped .page__1 {
   transform: rotateY(-180deg);
   box-shadow: 1.5rem 2rem 3rem rgba(0, 0, 0, 0.25);
+}
+.page.flipped .page__1 > * {
+  opacity: 0;
+  pointer-events: none;
 }
 .page.flipped .page__1::after, .page.flipped .page__1::before {
   opacity: 1;
@@ -364,6 +371,9 @@ body {
     padding: 16px;
     border: 4px solid #fff;
   }
+  .page__1 > * {
+    transition: opacity 0.3s;
+  }
   .page__1::after {
     content: attr(data-flipicon);
     display: flex;
@@ -424,6 +434,10 @@ body {
   .page.flipped .page__1 {
     transform: rotateY(-180deg);
     box-shadow: 1.5rem 2rem 3rem rgba(0, 0, 0, 0.25);
+  }
+  .page.flipped .page__1 > * {
+    opacity: 0;
+    pointer-events: none;
   }
   .page.flipped .page__1::after, .page.flipped .page__1::before {
     opacity: 1;
