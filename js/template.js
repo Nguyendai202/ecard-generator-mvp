@@ -162,12 +162,16 @@ function renderMusic(musicUrl){
 }
 
 function greetingFor(name, relationship){
+    const r = (relationship || "").toLowerCase()
     // Match whole words only (not substrings) — e.g. "ba" must not match inside "ban".
-    const words = (relationship || "").toLowerCase().split(/[^a-zàáảãạăằắẳẵặâầấẩẫậđèéẻẽẹêềếểễệìíỉĩịòóỏõọôồốổỗộơờớởỡợùúủũụưừứửữựỳýỷỹỵ]+/)
+    const words = r.split(/[^a-zàáảãạăằắẳẵặâầấẩẫậđèéẻẽẹêềếểễệìíỉĩịòóỏõọôồốổỗộơờớởỡợùúủũụưừứửữựỳýỷỹỵ]+/)
     const formal = new Set(["thầy", "cô", "giáo", "chú", "bác", "ông", "bà", "sếp"])
     const family = new Set(["bố", "mẹ", "ba", "má", "anh", "chị", "em"])
+    const romanticPhrases = ["người yêu", "bạn trai", "bạn gái", "vợ", "chồng"]
+
     if (words.some(w => formal.has(w))) return `Kính mời ${name}`
-    if (words.some(w => family.has(w)) || relationship?.toLowerCase().includes("gia đình")) return `Thân mời ${name}`
+    if (romanticPhrases.some(p => r.includes(p))) return `Gửi ${name} yêu thương`
+    if (words.some(w => family.has(w)) || r.includes("gia đình")) return `Thân mời ${name}`
     return `Xin chào ${name}`
 }
 
