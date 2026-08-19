@@ -1,20 +1,17 @@
-@import url('https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,400;1,100;1,200&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,400;1,100;1,200;0,600;0,700&display=swap');
 
-$m-height: 20rem;
+$m-height: 22rem;
 $m-width: 26rem;
-
-// $m-height: 24rem;
-// $m-width: 16rem;
 
 body{
 	margin: 0;
 	padding: 0;
+	background: linear-gradient(180deg, #f3e8ff 0%, #fdf2f8 40%, #fff7ed 100%);
 }
 .wrapper {
 	display: flex;
 	justify-content: center;
 	align-items: center;
-	background-color: #d9dcd6;
 	height: 100vh;
 	font-family: 'Poppins', sans-serif;
 	overflow: hidden;
@@ -29,11 +26,7 @@ body{
 	color: #484e4a;
 }
 
-.page {
-	width: 100%;
-	height: $m-height;
-	perspective: 1500px;
-
+@mixin page-faces {
 	&__1 {
 		// Front of 1st page
 		background-color: #ffffff;
@@ -41,7 +34,7 @@ body{
 		width: 100%;
 		height: 100%;
 		text-align: center;
-		overflow: hidden; 
+		overflow: hidden;
 		position: absolute;
 		top: 0;
 		left: 0;
@@ -53,15 +46,16 @@ body{
 		border: 4px solid #fff;
 
 		&::after {
-			// Back of 1st page
-			content: "🍰";
+			// Back of 1st page — icon set dynamically via data-flipicon (js/template.js)
+			content: attr(data-flipicon);
 			display: flex;
-			justify-content:center ;
+			flex-direction: column;
+			justify-content: center;
 			align-items: center;
-			font-size: 3rem;
+			gap: 0.6rem;
+			font-size: 3.5rem;
 			color: #252525;
 			position: absolute;
-			padding-top: 1.5rem;
 			top: 0;
 			left: 0;
 			background-color: #ffffff;
@@ -72,23 +66,46 @@ body{
 			padding: 16px;
 			transform: rotateY(180deg);
 			transition: all 0.3s 0.5s;
+			box-sizing: border-box;
+		}
+
+		&::before {
+			content: "Xin mời bạn";
+			position: absolute;
+			bottom: 24px;
+			left: 0;
+			width: 100%;
+			text-align: center;
+			font-size: 0.75rem;
+			letter-spacing: 1px;
+			text-transform: uppercase;
+			color: #8100eb;
+			opacity: 0;
+			z-index: 2;
+			transform: rotateY(180deg);
+			transition: all 0.3s 0.5s;
 		}
 	}
 
 	&__2 {
-		// Front of 2nd page
-		background-color: #8100eb;
-		color: #d9dcd6;
+		// Front of 2nd page — the "inside" of the card
+		background: linear-gradient(135deg, #8100eb 0%, #b33bff 100%);
+		color: #fff;
 		width: 100%;
 		height: 100%;
 		font-weight: 400;
 		position: absolute;
 		text-align: center;
-		padding: 16px;
+		padding: 20px 16px 16px;
 		top: 0;
 		left: 0;
 		opacity: 1;
 		border: 4px solid #fff;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		overflow: hidden;
 	}
 
 	&:hover &__1,
@@ -96,88 +113,179 @@ body{
 		transform: rotateY(-180deg);
 		box-shadow: 1.5rem 2rem 3rem rgba(#000, 0.25);
 
-		&::after {
+		&::after, &::before {
 			// Back of 1st page hover
 			opacity: 1;
 		}
 	}
 }
 
+.page {
+	width: 100%;
+	height: $m-height;
+	perspective: 1500px;
+
+	@include page-faces;
+}
+
+.type-icon {
+	position: absolute;
+	top: 10px;
+	right: 16px;
+	font-size: 2rem;
+	opacity: 0.3;
+}
+
+.photo-badge {
+	display: none;
+	width: 84px;
+	height: 84px;
+	border-radius: 50%;
+	overflow: hidden;
+	border: 3px solid #fff;
+	box-shadow: 0 4px 12px rgba(#000, 0.3);
+	margin-bottom: 10px;
+	flex: none;
+
+	img {
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+	}
+}
+
 #chead{
-	font-size: 1.4rem;
-	// text-transform: uppercase;
+	font-size: 0.75rem;
+	text-transform: uppercase;
+	letter-spacing: 1.5px;
 	text-align: center;
 	font-weight: 600;
-	line-height: 1px;
+	opacity: 0.85;
+	margin: 0 0 6px;
 }
 
 #uname{
-	font-size: 1.4rem;
-	// text-transform: uppercase;
+	font-size: 1.6rem;
 	text-align: center;
-	font-weight: 400;
+	font-weight: 700;
+	margin: 0 0 10px;
 }
 
 .below-card {
 	max-width: $m-width;
-	margin: 1.5rem auto;
-	padding: 0 1rem 2rem;
+	margin: 0 auto;
+	padding: 0.5rem 1rem 3rem;
 	text-align: center;
 	font-family: 'Poppins', sans-serif;
 	color: #484e4a;
 
+	.section {
+		background: #fff;
+		border-radius: 16px;
+		box-shadow: 0 8px 24px rgba(#8100eb, 0.08);
+		padding: 1.5rem 1.2rem;
+		margin: 1rem 0;
+
+		&:empty {
+			display: none;
+			padding: 0;
+			margin: 0;
+			box-shadow: none;
+		}
+	}
+
+	h3 {
+		font-size: 0.75rem;
+		text-transform: uppercase;
+		letter-spacing: 1.5px;
+		color: #8100eb;
+		margin: 0 0 1rem;
+	}
+
 	button {
 		border: none;
 		border-radius: 999px;
-		padding: 0.5rem 1.2rem;
+		padding: 0.6rem 1.4rem;
 		margin: 0.3rem;
 		background-color: #8100eb;
 		color: #fff;
 		cursor: pointer;
+		font-family: inherit;
 	}
 
-	input {
-		padding: 0.5rem;
-		border-radius: 6px;
-		border: 1px solid #ccc;
-		margin: 0.3rem;
+	input, textarea {
+		padding: 0.6rem;
+		border-radius: 10px;
+		border: 1px solid #e5d9f2;
+		margin: 0.3rem 0;
+		width: 100%;
+		box-sizing: border-box;
+		font-family: inherit;
 	}
 
 	a {
 		display: inline-block;
 		margin: 0.5rem 0;
 		color: #8100eb;
+		font-weight: 600;
+	}
+
+	.countdown-grid {
+		display: flex;
+		justify-content: center;
+		gap: 0.8rem;
+
+		div {
+			background: linear-gradient(135deg, #8100eb, #b33bff);
+			color: #fff;
+			border-radius: 12px;
+			padding: 0.6rem 0.8rem;
+			min-width: 3.2rem;
+		}
+
+		span {
+			display: block;
+			font-size: 1.4rem;
+			font-weight: 700;
+		}
+
+		small {
+			font-size: 0.65rem;
+			opacity: 0.85;
+		}
+	}
+
+	.wish-item {
+		text-align: left;
+		border-bottom: 1px solid #f0e6fa;
+		padding: 0.6rem 0;
+
+		strong {
+			color: #8100eb;
+			font-size: 0.85rem;
+		}
+
+		p {
+			margin: 0.2rem 0 0;
+			font-size: 0.85rem;
+		}
 	}
 }
 
 #utext{
-	white-space: pre-wrap;       
-    white-space: -moz-pre-wrap;  
-    white-space: -pre-wrap;      
-    white-space: -o-pre-wrap;    
-    word-wrap: break-word;      
+	font-size: 0.9rem;
+	line-height: 1.5;
+	opacity: 0.95;
+	white-space: pre-wrap;
+	word-wrap: break-word;
+	max-height: calc(#{$m-height} - 10rem);
+	overflow: auto;
 }
 
 
 @media only screen and (max-width:500px){
-	$m-height: 200px;
+	$m-height: 240px;
 	$m-width: 280px;
-
-	#chead{
-		font-size: 1rem;
-		// text-transform: uppercase;
-		text-align: center;
-		font-weight: 600;
-		line-height: 0.5px;
-	}
-
-	#uname{
-		font-size: 1rem;
-		// text-transform: uppercase;
-		text-align: center;
-		font-weight: 400;
-	}
-	
 
 	.book {
 		height: $m-height;
@@ -187,78 +295,40 @@ body{
 		position: relative;
 		color: #484e4a;
 	}
-	
+
 	.page {
 		width: 100%;
 		height: $m-height;
 		perspective: 1500px;
-	
-		&__1 {
-			// Front of 1st page
-			background-color: #ffffff;
-			color: rgb(0, 0, 0);
-			width: 100%;
-			height: 100%;
-			text-align: center;
-			overflow: hidden; 
-			position: absolute;
-			top: 0;
-			left: 0;
-			opacity: 1;
-			transition: all 1s 0.3s;
-			transform-origin: 0 50%;
-			z-index: 2;
-			padding: 16px;
-			border: 4px solid #fff;
-	
-			&::after {
-				// Back of 1st page
-				content: "🍰";
-				display: flex;
-				justify-content:center ;
-				align-items: center;
-				font-size: 3rem;
-				color: #252525;
-				position: absolute;
-				padding-top: 1rem;
-				top: 0;
-				left: 0;
-				background-color: #ffffff;
-				width: 100%;
-				height: 100%;
-				z-index: 1;
-				opacity: 0;
-				padding: 16px;
-				transform: rotateY(180deg);
-				transition: all 0.3s 0.5s;
-			}
-		}
-	
-		&__2 {
-			// Front of 2nd page
-			background-color: #8100eb;
-			color: #d9dcd6;
-			width: 100%;
-			height: 100%;
-			font-weight: 400;
-			position: absolute;
-			text-align: center;
-			padding: 16px;
-			top: 0;
-			left: 0;
-			opacity: 1;
-			border: 4px solid #fff;
-		}
-	
-		&:hover &__1,
-		&.flipped &__1 {
-			transform: rotateY(-180deg);
-			box-shadow: 1.5rem 2rem 3rem rgba(#000, 0.25);
 
-			&::after {
-				// Back of 1st page hover
-				opacity: 1;
-			}
-		}
+		@include page-faces;
+	}
+
+	.type-icon {
+		font-size: 1.3rem;
+		top: 6px;
+		right: 10px;
+	}
+
+	.photo-badge {
+		width: 56px;
+		height: 56px;
+		margin-bottom: 6px;
+	}
+
+	#chead{
+		font-size: 0.55rem;
+		letter-spacing: 1px;
+		margin-bottom: 4px;
+	}
+
+	#uname{
+		font-size: 1rem;
+		margin-bottom: 6px;
+	}
+
+	#utext {
+		font-size: 0.7rem;
+		max-height: calc(#{$m-height} - 6rem);
 	}
 }

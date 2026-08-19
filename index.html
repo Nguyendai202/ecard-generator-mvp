@@ -58,8 +58,30 @@
                         </div>
                         <br>
                         <div class="form-group">
-                            <label for="cmusic">Link nhạc nền mp3 (tuỳ chọn)</label>
-                            <input type="text" class="form-control" id="cmusic" placeholder="https://.../background-music.mp3">
+                            <label for="cmusicfile">Nhạc nền (tuỳ chọn, mp3/mp4, tối đa 20MB)</label>
+                            <input type="file" class="form-control" id="cmusicfile" accept="audio/mpeg,audio/mp4,video/mp4">
+                            <small class="text-muted">Không hỗ trợ dán link YouTube (vi phạm điều khoản YouTube). Tải/convert file mp3 ở nơi khác rồi upload vào đây.</small>
+                            <div id="music-trim-ui" style="display:none;margin-top:10px">
+                                <audio id="music-preview" controls style="width:100%"></audio>
+                                <div class="d-flex align-items-center gap-2 mt-2">
+                                    <label class="mb-0" style="white-space:nowrap">Bắt đầu</label>
+                                    <input type="range" id="trim-start" min="0" max="0" value="0" step="0.1" style="flex:1">
+                                    <span id="trim-start-label">0:00</span>
+                                </div>
+                                <div class="d-flex align-items-center gap-2">
+                                    <label class="mb-0" style="white-space:nowrap">Kết thúc</label>
+                                    <input type="range" id="trim-end" min="0" max="0" value="0" step="0.1" style="flex:1">
+                                    <span id="trim-end-label">0:00</span>
+                                </div>
+                                <a onclick="previewTrim()" class="btn btn-sm btn-outline-primary mt-1">▶ Nghe thử đoạn đã chọn</a>
+                                <p class="text-muted mb-0"><small>Đoạn cắt tối đa 60 giây, sẽ tự động cắt khi bạn tạo thiệp.</small></p>
+                            </div>
+                        </div>
+                        <br>
+                        <div class="form-group">
+                            <label for="cphoto">Ảnh cá nhân (tuỳ chọn, tối đa 5MB)</label>
+                            <input type="file" class="form-control" id="cphoto" accept="image/png,image/jpeg,image/webp,image/gif">
+                            <img id="cphoto-preview" style="display:none;max-width:150px;margin-top:8px;border-radius:8px">
                         </div>
                         <br>
                         <div class="form-group">

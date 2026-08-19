@@ -46,6 +46,180 @@ function parseGuestNames(){
         .filter(n => n.length > 0)
 }
 
+document.getElementById("cphoto").addEventListener("change", function(){
+    const file = this.files[0]
+    const preview = document.getElementById("cphoto-preview")
+    if (!file) {
+        preview.style.display = "none"
+        return
+    }
+    preview.src = URL.createObjectURL(file)
+    preview.style.display = ""
+})
+
+async function uploadPhotoIfAny(eventId){
+    const file = document.getElementById("cphoto").files[0]
+    if (!file || !supabaseClient) return null
+
+    const ext = file.name.split(".").pop()
+    const path = `${eventId}.${ext}`
+
+    const { error } = await supabaseClient.storage.from("card-photos").upload(path, file)
+    if (error) {
+        console.error(error)
+        return null
+    }
+
+    return supabaseClient.storage.from("card-photos").getPublicUrl(path).data.publicUrl
+}
+
+// ---- Music trim (Web Audio API, entirely client-side) ----
+
+const MAX_CLIP_SECONDS = 60
+
+function formatTime(sec){
+    const m = Math.floor(sec / 60)
+    const s = Math.floor(sec % 60)
+    return `${m}:${String(s).padStart(2, "0")}`
+}
+
+document.getElementById("cmusicfile").addEventListener("change", function(){
+    const file = this.files[0]
+    const ui = document.getElementById("music-trim-ui")
+    const audio = document.getElementById("music-preview")
+    if (!file) {
+        ui.style.display = "none"
+        return
+    }
+
+    audio.src = URL.createObjectURL(file)
+    audio.addEventListener("loadedmetadata", function onMeta(){
+        audio.removeEventListener("loadedmetadata", onMeta)
+        const duration = audio.duration
+        const startInput = document.getElementById("trim-start")
+        const endInput = document.getElementById("trim-end")
+        startInput.max = duration
+        endInput.max = duration
+        startInput.value = 0
+        endInput.value = Math.min(duration, MAX_CLIP_SECONDS)
+        document.getElementById("trim-start-label").textContent = formatTime(0)
+        document.getElementById("trim-end-label").textContent = formatTime(endInput.value)
+        ui.style.display = ""
+    }, { once: true })
+})
+
+document.getElementById("trim-start").addEventListener("input", function(){
+    const endInput = document.getElementById("trim-end")
+    if (parseFloat(this.value) >= parseFloat(endInput.value)) this.value = endInput.value - 1
+    if (parseFloat(endInput.value) - parseFloat(this.value) > MAX_CLIP_SECONDS) endInput.value = parseFloat(this.value) + MAX_CLIP_SECONDS
+    document.getElementById("trim-start-label").textContent = formatTime(this.value)
+})
+
+document.getElementById("trim-end").addEventListener("input", function(){
+    const startInput = document.getElementById("trim-start")
+    if (parseFloat(this.value) <= parseFloat(startInput.value)) this.value = parseFloat(startInput.value) + 1
+    if (parseFloat(this.value) - parseFloat(startInput.value) > MAX_CLIP_SECONDS) this.value = parseFloat(startInput.value) + MAX_CLIP_SECONDS
+    document.getElementById("trim-end-label").textContent = formatTime(this.value)
+})
+
+function previewTrim(){
+    const audio = document.getElementById("music-preview")
+    const start = parseFloat(document.getElementById("trim-start").value)
+    const end = parseFloat(document.getElementById("trim-end").value)
+    audio.currentTime = start
+    audio.play()
+    const stopAtEnd = () => {
+        if (audio.currentTime >= end) {
+            audio.pause()
+            audio.removeEventListener("timeupdate", stopAtEnd)
+        }
+    }
+    audio.addEventListener("timeupdate", stopAtEnd)
+}
+
+function audioBufferToWavBlob(buffer){
+    const numChannels = buffer.numberOfChannels
+    const sampleRate = buffer.sampleRate
+    const numFrames = buffer.length
+    const bytesPerSample = 2
+    const blockAlign = numChannels * bytesPerSample
+    const dataSize = numFrames * blockAlign
+    const arrayBuffer = new ArrayBuffer(44 + dataSize)
+    const view = new DataView(arrayBuffer)
+
+    function writeString(offset, str){
+        for (let i = 0; i < str.length; i++) view.setUint8(offset + i, str.charCodeAt(i))
+    }
+
+    writeString(0, "RIFF")
+    view.setUint32(4, 36 + dataSize, true)
+    writeString(8, "WAVE")
+    writeString(12, "fmt ")
+    view.setUint32(16, 16, true)
+    view.setUint16(20, 1, true) // PCM
+    view.setUint16(22, numChannels, true)
+    view.setUint32(24, sampleRate, true)
+    view.setUint32(28, sampleRate * blockAlign, true)
+    view.setUint16(32, blockAlign, true)
+    view.setUint16(34, 16, true)
+    writeString(36, "data")
+    view.setUint32(40, dataSize, true)
+
+    const channels = []
+    for (let ch = 0; ch < numChannels; ch++) channels.push(buffer.getChannelData(ch))
+
+    let offset = 44
+    for (let i = 0; i < numFrames; i++) {
+        for (let ch = 0; ch < numChannels; ch++) {
+            const sample = Math.max(-1, Math.min(1, channels[ch][i]))
+            view.setInt16(offset, sample < 0 ? sample * 0x8000 : sample * 0x7fff, true)
+            offset += 2
+        }
+    }
+
+    return new Blob([arrayBuffer], { type: "audio/wav" })
+}
+
+async function trimAudioFile(file, startSec, endSec){
+    const arrayBuffer = await file.arrayBuffer()
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)()
+    const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer)
+    const sampleRate = audioBuffer.sampleRate
+    const startSample = Math.floor(startSec * sampleRate)
+    const endSample = Math.min(Math.floor(endSec * sampleRate), audioBuffer.length)
+    const frameCount = endSample - startSample
+    const trimmedBuffer = audioCtx.createBuffer(audioBuffer.numberOfChannels, frameCount, sampleRate)
+    for (let ch = 0; ch < audioBuffer.numberOfChannels; ch++) {
+        trimmedBuffer.copyToChannel(audioBuffer.getChannelData(ch).subarray(startSample, endSample), ch)
+    }
+    return audioBufferToWavBlob(trimmedBuffer)
+}
+
+async function uploadMusicIfAny(eventId){
+    const file = document.getElementById("cmusicfile").files[0]
+    if (!file || !supabaseClient) return null
+
+    const start = parseFloat(document.getElementById("trim-start").value)
+    const end = parseFloat(document.getElementById("trim-end").value)
+
+    let clipBlob
+    try {
+        clipBlob = await trimAudioFile(file, start, end)
+    } catch (e) {
+        console.error("Không cắt được file nhạc này, bỏ qua nhạc nền.", e)
+        return null
+    }
+
+    const path = `${eventId}.wav`
+    const { error } = await supabaseClient.storage.from("card-music").upload(path, clipBlob)
+    if (error) {
+        console.error(error)
+        return null
+    }
+
+    return supabaseClient.storage.from("card-music").getPublicUrl(path).data.publicUrl
+}
+
 async function selectCard(no){
     const templ = no
     const cname = document.getElementById("cname").value
@@ -54,7 +228,6 @@ async function selectCard(no){
     const cdate = document.getElementById("cdate").value || null
     const ctime = document.getElementById("ctime").value || null
     const clocation = document.getElementById("clocation").value || null
-    const cmusic = document.getElementById("cmusic").value || null
     const guestNames = parseGuestNames()
 
     const singleLinkBlock = document.getElementById("single-link-block")
@@ -77,13 +250,17 @@ async function selectCard(no){
     // rows — see supabase/schema.sql), and Postgres requires a SELECT policy to
     // satisfy RETURNING, so RETURNING would make every insert fail RLS.
     const eventId = crypto.randomUUID()
+    document.getElementById("msg").innerText = `Đang tạo thiệp...`
+    const photoUrl = await uploadPhotoIfAny(eventId)
+    const musicUrl = await uploadMusicIfAny(eventId)
 
     const { error } = await supabaseClient
         .from("events")
         .insert({
             id: eventId,
             card_type: ctype, template_no: templ, host_name: cname, message: ctext,
-            event_date: cdate, event_time: ctime, event_location: clocation, music_url: cmusic
+            event_date: cdate, event_time: ctime, event_location: clocation, music_url: musicUrl,
+            photo_url: photoUrl
         })
 
     if (error) {
