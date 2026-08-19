@@ -43,19 +43,36 @@
                         <!-- EVENT DETAILS -->
 
                         <div class="row">
-                            <div class="form-group col-md-6">
+                            <div class="form-group col-md-4">
                                 <label for="cdate">Ngày tổ chức (tuỳ chọn)</label>
                                 <input type="date" class="form-control" id="cdate">
                             </div>
-                            <div class="form-group col-md-6">
-                                <label for="ctime">Giờ (tuỳ chọn)</label>
+                            <div class="form-group col-md-4">
+                                <label for="ctime">Từ giờ (tuỳ chọn)</label>
                                 <input type="time" class="form-control" id="ctime">
+                            </div>
+                            <div class="form-group col-md-4">
+                                <label for="ctimeend">Đến giờ (tuỳ chọn)</label>
+                                <input type="time" class="form-control" id="ctimeend">
                             </div>
                         </div>
                         <br>
                         <div class="form-group">
                             <label for="clocation">Địa điểm (tuỳ chọn)</label>
                             <input type="text" class="form-control" id="clocation" placeholder="Ví dụ: Nhà hàng ABC, 123 Đường XYZ, Quận 1, TP.HCM">
+                        </div>
+                        <br>
+                        <div class="form-group">
+                            <label for="cnotes">Lưu ý cho khách mời (tuỳ chọn)</label>
+                            <textarea rows="2" class="form-control" id="cnotes" placeholder="VD: Khu vực hay kẹt xe giờ cao điểm, nên gửi xe tại bãi ABC, đến sớm 15 phút để check-in..."></textarea>
+                        </div>
+                        <br>
+                        <div class="form-group">
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" id="cafterparty-toggle">
+                                <label class="form-check-label" for="cafterparty-toggle">Có rủ đi ăn/tụ tập sau đó không? (khách sẽ tự tick riêng, không gộp vào RSVP tham dự chính)</label>
+                            </div>
+                            <input type="text" class="form-control mt-2" id="cafterparty-note" placeholder="VD: Ăn tối tại quán ABC sau lễ, ai rảnh thì đi cùng nhé" style="display:none">
                         </div>
                         <br>
                         <div class="form-group">
@@ -86,8 +103,9 @@
                         </div>
                         <br>
                         <div class="form-group">
-                            <label for="cguests">Danh sách khách mời (tuỳ chọn, mỗi tên 1 dòng)</label>
-                            <textarea rows="3" class="form-control" id="cguests" placeholder="Để trống nếu muốn dùng 1 link chung cho tất cả khách.&#10;Nếu điền, mỗi khách sẽ có 1 link riêng, tên tự điền sẵn."></textarea>
+                            <label for="cguests">Danh sách khách mời (tuỳ chọn, mỗi khách 1 dòng)</label>
+                            <textarea rows="3" class="form-control" id="cguests" placeholder="Để trống nếu muốn dùng 1 link chung cho tất cả khách.&#10;Nếu điền: Tên | Mối quan hệ (tuỳ chọn) — mỗi khách 1 dòng.&#10;VD:&#10;Nguyễn Văn B | bạn thân&#10;Cô Lan | thầy cô&#10;Chị Hoa"></textarea>
+                            <small class="text-muted">Ghi mối quan hệ (bạn thân/thầy cô/gia đình/đồng nghiệp...) để lời chào trên thiệp của từng khách phù hợp hơn — không bắt buộc.</small>
                         </div>
                         <br>
 
@@ -144,5 +162,10 @@
         <script src="./js/config.js"></script>
         <script src="./js/supabase-client.js"></script>
         <script src="./js/creator.js"></script>
+        <script>
+            document.getElementById("cafterparty-toggle").addEventListener("change", function(){
+                document.getElementById("cafterparty-note").style.display = this.checked ? "" : "none"
+            })
+        </script>
 	</body>
 </html>

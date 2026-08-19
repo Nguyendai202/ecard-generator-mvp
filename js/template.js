@@ -55,15 +55,21 @@ function renderCard(utype, utempl, uname, utext, photoUrl){
     })
 }
 
-function googleCalendarLink(title, dateStr, timeStr, location, details){
+function googleCalendarLink(title, dateStr, timeStr, timeEndStr, location, details){
     if (!dateStr) return null
     const compactDate = dateStr.replaceAll("-", "")
     let dates
     if (timeStr) {
         const compactTime = timeStr.replaceAll(":", "") + "00"
-        const [h, m] = timeStr.split(":").map(Number)
-        const endH = String((h + 2) % 24).padStart(2, "0")
-        dates = `${compactDate}T${compactTime}/${compactDate}T${endH}${String(m).padStart(2,"0")}00`
+        let endCompact
+        if (timeEndStr) {
+            endCompact = timeEndStr.replaceAll(":", "") + "00"
+        } else {
+            const [h, m] = timeStr.split(":").map(Number)
+            const endH = String((h + 2) % 24).padStart(2, "0")
+            endCompact = `${endH}${String(m).padStart(2,"0")}00`
+        }
+        dates = `${compactDate}T${compactTime}/${compactDate}T${endCompact}`
     } else {
         dates = `${compactDate}/${compactDate}`
     }
@@ -71,20 +77,24 @@ function googleCalendarLink(title, dateStr, timeStr, location, details){
     return `https://calendar.google.com/calendar/render?${params.toString()}`
 }
 
-function renderEventInfo(title, dateStr, timeStr, location){
+function renderEventInfo(title, dateStr, timeStr, timeEndStr, location, notes){
     if (!eventinfo_ele || (!dateStr && !location)) return
 
     const parts = [`<h3>Thông tin sự kiện</h3>`]
     if (dateStr) {
         const d = new Date(dateStr + "T00:00:00")
         const dateLabel = d.toLocaleDateString("vi-VN", { weekday: "long", year: "numeric", month: "long", day: "numeric" })
-        parts.push(`<p>📅 ${dateLabel}${timeStr ? " — " + timeStr : ""}</p>`)
+        const timeLabel = timeStr ? (timeEndStr ? `${timeStr} - ${timeEndStr}` : timeStr) : ""
+        parts.push(`<p>📅 ${dateLabel}${timeLabel ? " — " + timeLabel : ""}</p>`)
     }
     if (location) {
         parts.push(`<p>📍 ${location}</p>`)
     }
+    if (notes) {
+        parts.push(`<p>ℹ️ ${escapeHtml(notes)}</p>`)
+    }
 
-    const calLink = googleCalendarLink(title, dateStr, timeStr, location, "")
+    const calLink = googleCalendarLink(title, dateStr, timeStr, timeEndStr, location, "")
     if (calLink) {
         parts.push(`<a href="${calLink}" target="_blank" rel="noopener">➕ Thêm vào Google Calendar</a>`)
     }
@@ -151,24 +161,47 @@ function renderMusic(musicUrl){
     })
 }
 
-function renderRsvpForGuest(guest){
+function greetingFor(name, relationship){
+    // Match whole words only (not substrings) — e.g. "ba" must not match inside "ban".
+    const words = (relationship || "").toLowerCase().split(/[^a-zàáảãạăằắẳẵặâầấẩẫậđèéẻẽẹêềếểễệìíỉĩịòóỏõọôồốổỗộơờớởỡợùúủũụưừứửữựỳýỷỹỵ]+/)
+    const formal = new Set(["thầy", "cô", "giáo", "chú", "bác", "ông", "bà", "sếp"])
+    const family = new Set(["bố", "mẹ", "ba", "má", "anh", "chị", "em"])
+    if (words.some(w => formal.has(w))) return `Kính mời ${name}`
+    if (words.some(w => family.has(w)) || relationship?.toLowerCase().includes("gia đình")) return `Thân mời ${name}`
+    return `Xin chào ${name}`
+}
+
+function afterpartyFieldHtml(afterpartyNote){
+    if (!afterpartyNote) return ""
+    return `
+        <div class="afterparty-check">
+            <input type="checkbox" id="rsvp-afterparty">
+            <label for="rsvp-afterparty">🍜 ${escapeHtml(afterpartyNote)} — mình cũng muốn tham gia</label>
+        </div>
+    `
+}
+
+function renderRsvpForGuest(guest, afterpartyNote){
     if (!rsvp_ele) return
 
     if (guest.status !== "pending") {
-        rsvp_ele.innerHTML = `<h3>Xác nhận tham dự</h3><p>Bạn đã phản hồi: ${guest.status === "yes" ? "Sẽ tham dự" : "Không tham dự được"}. Cảm ơn bạn!</p>`
+        const afterpartyLine = guest.join_afterparty ? `<p>🍜 Đã đăng ký tham gia phần đi ăn/tụ tập sau đó.</p>` : ""
+        rsvp_ele.innerHTML = `<h3>Xác nhận tham dự</h3><p>Bạn đã phản hồi: ${guest.status === "yes" ? "Sẽ tham dự" : "Không tham dự được"}. Cảm ơn bạn!</p>${afterpartyLine}`
         return
     }
 
     rsvp_ele.innerHTML = `
         <h3>Xác nhận tham dự</h3>
-        <p>Xin chào ${guest.guest_name}, bạn có tham dự không?</p>
+        <p>${greetingFor(escapeHtml(guest.guest_name), guest.relationship)}, bạn có tham dự không?</p>
         <button id="rsvp-yes">Sẽ tham dự</button>
         <button id="rsvp-no">Không tham dự được</button>
+        ${afterpartyFieldHtml(afterpartyNote)}
         <p id="rsvp-msg"></p>
     `
 
     async function submitRsvp(status){
-        const { error } = await supabaseClient.rpc("submit_guest_rsvp", { p_guest_id: guestId, p_status: status })
+        const joinAfterparty = document.getElementById("rsvp-afterparty")?.checked || false
+        const { error } = await supabaseClient.rpc("submit_guest_rsvp", { p_guest_id: guestId, p_status: status, p_join_afterparty: joinAfterparty })
         const msg = document.getElementById("rsvp-msg")
         msg.innerText = error ? "Có lỗi, thử lại sau." : "Đã gửi phản hồi, cảm ơn bạn!"
     }
@@ -177,7 +210,7 @@ function renderRsvpForGuest(guest){
     document.getElementById("rsvp-no").addEventListener("click", () => submitRsvp("no"))
 }
 
-function renderRsvpGeneric(){
+function renderRsvpGeneric(afterpartyNote){
     if (!rsvp_ele || !eventId) return
 
     rsvp_ele.innerHTML = `
@@ -185,11 +218,13 @@ function renderRsvpGeneric(){
         <input id="rsvp-name" placeholder="Tên của bạn" type="text">
         <button id="rsvp-yes">Sẽ tham dự</button>
         <button id="rsvp-no">Không tham dự được</button>
+        ${afterpartyFieldHtml(afterpartyNote)}
         <p id="rsvp-msg"></p>
     `
 
     async function submitRsvp(status){
         const guestName = document.getElementById("rsvp-name").value
+        const joinAfterparty = document.getElementById("rsvp-afterparty")?.checked || false
         const msg = document.getElementById("rsvp-msg")
         if (!guestName) {
             msg.innerText = "Vui lòng nhập tên trước."
@@ -197,7 +232,7 @@ function renderRsvpGeneric(){
         }
         const { error } = await supabaseClient
             .from("rsvps")
-            .insert({ event_id: eventId, guest_name: guestName, status, responded_at: new Date().toISOString() })
+            .insert({ event_id: eventId, guest_name: guestName, status, join_afterparty: joinAfterparty, responded_at: new Date().toISOString() })
 
         msg.innerText = error ? "Có lỗi, thử lại sau." : "Đã gửi phản hồi, cảm ơn bạn!"
     }
@@ -287,13 +322,13 @@ async function init(){
     if (guestId) {
         const { data: guest, error: guestError } = await supabaseClient.rpc("get_guest", { p_guest_id: guestId }).single()
         if (!guestError && guest) {
-            renderRsvpForGuest(guest)
+            renderRsvpForGuest(guest, event.afterparty_note)
         }
     } else {
-        renderRsvpGeneric()
+        renderRsvpGeneric(event.afterparty_note)
     }
 
-    renderEventInfo(cardDATA[event.card_type]["title"], event.event_date, event.event_time, event.event_location)
+    renderEventInfo(cardDATA[event.card_type]["title"], event.event_date, event.event_time, event.event_time_end, event.event_location, event.notes)
     renderCountdown(event.event_date, event.event_time)
     renderMusic(event.music_url)
     renderWishes()

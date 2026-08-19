@@ -242,6 +242,25 @@ body {
   color: #8100eb;
   font-weight: 600;
 }
+.below-card .afterparty-check {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #fdf2f8;
+  border-radius: 10px;
+  padding: 0.6rem 0.8rem;
+  margin: 0.5rem 0;
+  text-align: left;
+}
+.below-card .afterparty-check input {
+  width: auto;
+  margin: 0;
+  flex: none;
+}
+.below-card .afterparty-check label {
+  font-size: 0.85rem;
+  margin: 0;
+}
 .below-card .countdown-grid {
   display: flex;
   justify-content: center;

@@ -65,8 +65,12 @@ function genCards(){
 function parseGuestNames(){
     return document.getElementById("cguests").value
         .split("\n")
-        .map(n => n.trim())
-        .filter(n => n.length > 0)
+        .map(line => line.trim())
+        .filter(line => line.length > 0)
+        .map(line => {
+            const [name, relationship] = line.split("|").map(s => s.trim())
+            return { name, relationship: relationship || null }
+        })
 }
 
 document.getElementById("cphoto").addEventListener("change", function(){
@@ -250,8 +254,12 @@ async function selectCard(no){
     const ctype = document.getElementById("ctype").value
     const cdate = document.getElementById("cdate").value || null
     const ctime = document.getElementById("ctime").value || null
+    const ctimeend = document.getElementById("ctimeend").value || null
     const clocation = document.getElementById("clocation").value || null
-    const guestNames = parseGuestNames()
+    const cnotes = document.getElementById("cnotes").value || null
+    const cafterpartyOn = document.getElementById("cafterparty-toggle").checked
+    const cafterpartyNote = cafterpartyOn ? (document.getElementById("cafterparty-note").value || "Đi ăn/tụ tập sau đó") : null
+    const guests_input = parseGuestNames()
 
     const singleLinkBlock = document.getElementById("single-link-block")
     const guestLinkList = document.getElementById("guest-link-list")
@@ -282,8 +290,9 @@ async function selectCard(no){
         .insert({
             id: eventId,
             card_type: ctype, template_no: templ, host_name: cname, message: ctext,
-            event_date: cdate, event_time: ctime, event_location: clocation, music_url: musicUrl,
-            photo_url: photoUrl
+            event_date: cdate, event_time: ctime, event_time_end: ctimeend, event_location: clocation,
+            notes: cnotes, afterparty_note: cafterpartyNote,
+            music_url: musicUrl, photo_url: photoUrl
         })
 
     if (error) {
@@ -292,7 +301,7 @@ async function selectCard(no){
         return
     }
 
-    if (guestNames.length === 0) {
+    if (guests_input.length === 0) {
         singleLinkBlock.style.display = ""
         const temp = new URL(`templates/1.html?event=${eventId}`, window.location.href).href
         showSingleLink(temp)
@@ -302,7 +311,7 @@ async function selectCard(no){
 
     singleLinkBlock.style.display = "none"
 
-    const guests = guestNames.map(name => ({ id: crypto.randomUUID(), event_id: eventId, guest_name: name }))
+    const guests = guests_input.map(g => ({ id: crypto.randomUUID(), event_id: eventId, guest_name: g.name, relationship: g.relationship }))
 
     const { error: guestError } = await supabaseClient
         .from("guests")
