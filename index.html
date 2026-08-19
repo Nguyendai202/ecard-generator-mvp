@@ -39,6 +39,35 @@
                         </div>
                         <br>
 
+                        <!-- EVENT DETAILS -->
+
+                        <div class="row">
+                            <div class="form-group col-md-6">
+                                <label for="cdate">Ngày tổ chức (tuỳ chọn)</label>
+                                <input type="date" class="form-control" id="cdate">
+                            </div>
+                            <div class="form-group col-md-6">
+                                <label for="ctime">Giờ (tuỳ chọn)</label>
+                                <input type="time" class="form-control" id="ctime">
+                            </div>
+                        </div>
+                        <br>
+                        <div class="form-group">
+                            <label for="clocation">Địa điểm (tuỳ chọn)</label>
+                            <input type="text" class="form-control" id="clocation" placeholder="Ví dụ: Nhà hàng ABC, 123 Đường XYZ, Quận 1, TP.HCM">
+                        </div>
+                        <br>
+                        <div class="form-group">
+                            <label for="cmusic">Link nhạc nền mp3 (tuỳ chọn)</label>
+                            <input type="text" class="form-control" id="cmusic" placeholder="https://.../background-music.mp3">
+                        </div>
+                        <br>
+                        <div class="form-group">
+                            <label for="cguests">Danh sách khách mời (tuỳ chọn, mỗi tên 1 dòng)</label>
+                            <textarea rows="3" class="form-control" id="cguests" placeholder="Để trống nếu muốn dùng 1 link chung cho tất cả khách.&#10;Nếu điền, mỗi khách sẽ có 1 link riêng, tên tự điền sẵn."></textarea>
+                        </div>
+                        <br>
+
                         <!-- TYPE -->
 
                         <div class="form-group">
@@ -62,13 +91,16 @@
                     <p id="msg"></p>
                 </div>
                 <div class="card-footer text-muted">
-                    <div class="input-group mb-3">
-                        <input id="resultlink" type="text" class="form-control">
-                        <div class="input-group-append">
-                          <button id="copybtn" class="btn btn-outline-secondary" type="button">Copy URL</button>
+                    <div id="single-link-block">
+                        <div class="input-group mb-3">
+                            <input id="resultlink" type="text" class="form-control">
+                            <div class="input-group-append">
+                              <button id="copybtn" class="btn btn-outline-secondary" type="button">Copy URL</button>
+                            </div>
                         </div>
+                        <canvas id="qr"></canvas>
                     </div>
-                    <canvas id="qr"></canvas>
+                    <div id="guest-link-list"></div>
                 </div>
             </div>
         </div>

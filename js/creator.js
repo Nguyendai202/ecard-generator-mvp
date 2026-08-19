@@ -39,39 +39,97 @@ function genCards(){
     frame.innerHTML = chosen
 }
 
+function parseGuestNames(){
+    return document.getElementById("cguests").value
+        .split("\n")
+        .map(n => n.trim())
+        .filter(n => n.length > 0)
+}
+
 async function selectCard(no){
     const templ = no
     const cname = document.getElementById("cname").value
     const ctext = document.getElementById("ctext").value
     const ctype = document.getElementById("ctype").value
-    const res = document.getElementById("resultlink")
+    const cdate = document.getElementById("cdate").value || null
+    const ctime = document.getElementById("ctime").value || null
+    const clocation = document.getElementById("clocation").value || null
+    const cmusic = document.getElementById("cmusic").value || null
+    const guestNames = parseGuestNames()
 
-    let temp
+    const singleLinkBlock = document.getElementById("single-link-block")
+    const guestLinkList = document.getElementById("guest-link-list")
+    guestLinkList.innerHTML = ""
 
-    if (supabaseClient) {
-        const { data, error } = await supabaseClient
-            .from("events")
-            .insert({ card_type: ctype, template_no: templ, host_name: cname, message: ctext })
-            .select()
-            .single()
-
-        if (error) {
-            document.getElementById("msg").innerText = "Có lỗi khi tạo thiệp, thử lại sau."
-            console.error(error)
-            return
-        }
-
-        temp = new URL(`templates/1.html?event=${data.id}`, window.location.href).href
-    } else {
+    if (!supabaseClient) {
         // Fallback: no backend configured, keep the original base64-in-URL behavior
         const enc_cname = encodeURI(window.btoa(cname))
         const enc_ctext = encodeURI(window.btoa(ctext))
-        temp = new URL(`templates/1.html?card=${ctype}&name=${enc_cname}&text=${enc_ctext}&templ=${templ}`, window.location.href).href
+        const temp = new URL(`templates/1.html?card=${ctype}&name=${enc_cname}&text=${enc_ctext}&templ=${templ}`, window.location.href).href
+        showSingleLink(temp)
+        singleLinkBlock.style.display = ""
+        document.getElementById("msg").innerText = `Card ${templ} is Selected. Send the link or the QR Code to the person`
+        return
     }
 
-    res.value = temp
+    // We generate the id client-side and skip .select() (no RETURNING) on purpose:
+    // events/guests have no SELECT policy (anon key must never be able to list/dump
+    // rows — see supabase/schema.sql), and Postgres requires a SELECT policy to
+    // satisfy RETURNING, so RETURNING would make every insert fail RLS.
+    const eventId = crypto.randomUUID()
 
-    // Generate QR code
+    const { error } = await supabaseClient
+        .from("events")
+        .insert({
+            id: eventId,
+            card_type: ctype, template_no: templ, host_name: cname, message: ctext,
+            event_date: cdate, event_time: ctime, event_location: clocation, music_url: cmusic
+        })
+
+    if (error) {
+        document.getElementById("msg").innerText = "Có lỗi khi tạo thiệp, thử lại sau."
+        console.error(error)
+        return
+    }
+
+    if (guestNames.length === 0) {
+        singleLinkBlock.style.display = ""
+        const temp = new URL(`templates/1.html?event=${eventId}`, window.location.href).href
+        showSingleLink(temp)
+        document.getElementById("msg").innerText = `Card ${templ} is Selected. Send the link or the QR Code to the person`
+        return
+    }
+
+    singleLinkBlock.style.display = "none"
+
+    const guests = guestNames.map(name => ({ id: crypto.randomUUID(), event_id: eventId, guest_name: name }))
+
+    const { error: guestError } = await supabaseClient
+        .from("guests")
+        .insert(guests)
+
+    if (guestError) {
+        document.getElementById("msg").innerText = "Đã tạo thiệp nhưng có lỗi khi tạo link riêng cho khách, thử lại sau."
+        console.error(guestError)
+        return
+    }
+
+    guestLinkList.innerHTML = `<p>Mỗi khách có 1 link riêng, tên tự điền sẵn:</p>` + guests.map(g => {
+        const link = new URL(`templates/1.html?event=${eventId}&guest=${g.id}`, window.location.href).href
+        return `
+            <div class="input-group mb-2">
+                <span class="input-group-text">${g.guest_name}</span>
+                <input type="text" class="form-control" readonly value="${link}">
+                <button class="btn btn-outline-secondary" type="button" onclick="navigator.clipboard.writeText('${link}')">Copy</button>
+            </div>`
+    }).join("")
+
+    document.getElementById("msg").innerText = `Card ${templ} is Selected. Gửi link riêng cho từng khách ở trên.`
+}
+
+function showSingleLink(temp){
+    const res = document.getElementById("resultlink")
+    res.value = temp
 
     var qr = new QRious({
         level: 'M',
@@ -80,8 +138,6 @@ async function selectCard(no){
         element: document.getElementById('qr'),
         value: temp
     });
-
-    document.getElementById("msg").innerText = `Card ${templ} is Selected. Send the link or the QR Code to the person`
 }
 
 /*

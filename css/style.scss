@@ -118,6 +118,38 @@ body{
 	font-weight: 400;
 }
 
+.below-card {
+	max-width: $m-width;
+	margin: 1.5rem auto;
+	padding: 0 1rem 2rem;
+	text-align: center;
+	font-family: 'Poppins', sans-serif;
+	color: #484e4a;
+
+	button {
+		border: none;
+		border-radius: 999px;
+		padding: 0.5rem 1.2rem;
+		margin: 0.3rem;
+		background-color: #8100eb;
+		color: #fff;
+		cursor: pointer;
+	}
+
+	input {
+		padding: 0.5rem;
+		border-radius: 6px;
+		border: 1px solid #ccc;
+		margin: 0.3rem;
+	}
+
+	a {
+		display: inline-block;
+		margin: 0.5rem 0;
+		color: #8100eb;
+	}
+}
+
 #utext{
 	white-space: pre-wrap;       
     white-space: -moz-pre-wrap;  

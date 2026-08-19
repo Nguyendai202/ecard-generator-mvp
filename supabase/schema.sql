@@ -1,7 +1,12 @@
--- E-Card-Generator schema
--- Run this in Supabase SQL Editor (Project > SQL Editor > New query)
+-- E-Card-Generator schema (v2)
+-- Run this in Supabase SQL Editor (Project > SQL Editor > New query).
+-- Safe to re-run: uses IF NOT EXISTS / OR REPLACE / DROP POLICY IF EXISTS.
 
 create extension if not exists "pgcrypto";
+
+-- ============================================================
+-- Tables
+-- ============================================================
 
 -- one row per invitation event created by a student
 create table if not exists events (
@@ -12,12 +17,27 @@ create table if not exists events (
   host_name text not null,
   message text not null,
   event_date date,
+  event_time text,                -- free-form "18:30" — avoids timezone handling for a v1
   event_location text,
+  music_url text,                 -- optional background-music mp3 link
   is_paid boolean not null default false,
   created_at timestamptz not null default now()
 );
 
--- one row per guest link/RSVP for an event
+alter table events add column if not exists event_time text;
+alter table events add column if not exists music_url text;
+
+-- one row per guest with a personalized invite link (event_id + guest.id form the link)
+create table if not exists guests (
+  id uuid primary key default gen_random_uuid(),
+  event_id uuid not null references events(id) on delete cascade,
+  guest_name text not null,
+  status text not null default 'pending' check (status in ('pending', 'yes', 'no')),
+  responded_at timestamptz,
+  created_at timestamptz not null default now()
+);
+
+-- one row per guest response when no personalized guest list was made (shared link, guest types their own name)
 create table if not exists rsvps (
   id uuid primary key default gen_random_uuid(),
   event_id uuid not null references events(id) on delete cascade,
@@ -27,34 +47,115 @@ create table if not exists rsvps (
   created_at timestamptz not null default now()
 );
 
+create index if not exists idx_guests_event_id on guests(event_id);
+create index if not exists idx_rsvps_event_id on rsvps(event_id);
+
+-- ============================================================
+-- Row Level Security
+-- ============================================================
+-- Design: rows are addressed by an unguessable uuid (the "capability" is
+-- knowing the id). We must NOT allow blanket `select using (true)` policies,
+-- because that lets anyone dump every event/guest row with one anon-key
+-- request, defeating the "unguessable link" model entirely. Instead, all
+-- reads go through SECURITY DEFINER functions below that always filter by
+-- an exact id parameter, so a client can only ever fetch the one row whose
+-- id they already know — never list/enumerate others.
+--
+-- Consequence: since there is no SELECT policy, INSERT ... RETURNING (what
+-- supabase-js's `.select()` after `.insert()` generates) will fail RLS,
+-- because Postgres needs a SELECT policy to allow returning the new row.
+-- The client must generate the row's id itself (crypto.randomUUID()) and
+-- insert without `.select()` — see js/creator.js.
+
 alter table events enable row level security;
+alter table guests enable row level security;
 alter table rsvps enable row level security;
 
--- Anyone can create an event (anon key, public form) — required for the static-site flow
+drop policy if exists "anyone can create event" on events;
 create policy "anyone can create event"
   on events for insert
   with check (true);
 
--- Anyone can read an event by id (needed to render the public card page)
-create policy "anyone can view event by id"
-  on events for select
-  using (true);
+-- no select/update/delete policy on events: reads only via get_event(), and
+-- there is no update/delete path yet (owner_token is reserved for a future
+-- dashboard implemented the same way, as a token-checked RPC).
+drop policy if exists "anyone can view event by id" on events;
 
--- No update/delete policy on events yet: with anon-key-only auth there is no way to
--- verify server-side which client "owns" a row, so events are insert+read only for
--- now. `owner_token` is reserved for a future dashboard, which must be implemented as
--- a Postgres RPC function that checks the token server-side, not a client-side update.
+drop policy if exists "anyone can create guests" on guests;
+create policy "anyone can create guests"
+  on guests for insert
+  with check (true);
 
+-- no select/update policy on guests: reads via get_guest(), RSVP writes via
+-- submit_guest_rsvp() only.
+
+drop policy if exists "anyone can insert rsvp" on rsvps;
 create policy "anyone can insert rsvp"
   on rsvps for insert
   with check (true);
 
-create policy "anyone can view rsvp"
-  on rsvps for select
-  using (true);
+-- no select policy on rsvps either (nothing in the app reads it back yet).
 
--- No update policy: the app only ever inserts a new rsvp row per response
--- (see js/template.js). Allowing updates with an anon key would let any visitor
--- overwrite another guest's RSVP since rows aren't tied to an authenticated user.
+-- ============================================================
+-- RPC functions (SECURITY DEFINER, always filtered by an exact id)
+-- ============================================================
 
-create index if not exists idx_rsvps_event_id on rsvps(event_id);
+create or replace function get_event(p_event_id uuid)
+returns table (
+  card_type text,
+  template_no int,
+  host_name text,
+  message text,
+  event_date date,
+  event_time text,
+  event_location text,
+  music_url text
+)
+language sql
+security definer
+set search_path = public
+as $$
+  select card_type, template_no, host_name, message, event_date, event_time, event_location, music_url
+  from events
+  where id = p_event_id;
+$$;
+
+create or replace function get_guest(p_guest_id uuid)
+returns table (
+  event_id uuid,
+  guest_name text,
+  status text
+)
+language sql
+security definer
+set search_path = public
+as $$
+  select event_id, guest_name, status
+  from guests
+  where id = p_guest_id;
+$$;
+
+create or replace function submit_guest_rsvp(p_guest_id uuid, p_status text)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if p_status not in ('yes', 'no') then
+    raise exception 'invalid status';
+  end if;
+
+  update guests
+  set status = p_status, responded_at = now()
+  where id = p_guest_id;
+end;
+$$;
+
+revoke all on function get_event(uuid) from public;
+revoke all on function get_guest(uuid) from public;
+revoke all on function submit_guest_rsvp(uuid, text) from public;
+
+grant execute on function get_event(uuid) to anon, authenticated;
+grant execute on function get_guest(uuid) to anon, authenticated;
+grant execute on function submit_guest_rsvp(uuid, text) to anon, authenticated;
