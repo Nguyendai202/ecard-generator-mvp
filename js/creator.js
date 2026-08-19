@@ -109,6 +109,55 @@ async function uploadPhotoIfAny(eventId){
     return supabaseClient.storage.from("card-photos").getPublicUrl(path).data.publicUrl
 }
 
+// ---- YouTube background music (official embed, no download) ----
+
+let ytApiReady = false
+window.onYouTubeIframeAPIReady = () => { ytApiReady = true }
+
+function extractYoutubeId(url){
+    const m = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/)
+    return m ? m[1] : null
+}
+
+let ytPreviewPlayer = null
+
+function createYtPreviewPlayer(videoId){
+    if (!ytApiReady) {
+        setTimeout(() => createYtPreviewPlayer(videoId), 300)
+        return
+    }
+    if (ytPreviewPlayer) {
+        ytPreviewPlayer.loadVideoById(videoId)
+        return
+    }
+    ytPreviewPlayer = new YT.Player("youtube-preview", {
+        height: "200",
+        width: "360",
+        videoId,
+        playerVars: { rel: 0 }
+    })
+}
+
+document.getElementById("cyoutube").addEventListener("input", function(){
+    const id = extractYoutubeId(this.value.trim())
+    const ui = document.getElementById("youtube-trim-ui")
+    if (!id) {
+        ui.style.display = "none"
+        return
+    }
+    ui.style.display = ""
+    createYtPreviewPlayer(id)
+})
+
+function previewYoutubeTrim(){
+    if (!ytPreviewPlayer) return
+    const start = parseFloat(document.getElementById("yt-start").value) || 0
+    const end = parseFloat(document.getElementById("yt-end").value) || start + 30
+    ytPreviewPlayer.seekTo(start, true)
+    ytPreviewPlayer.playVideo()
+    setTimeout(() => ytPreviewPlayer.pauseVideo(), Math.max(0, (end - start) * 1000))
+}
+
 // ---- Music trim (Web Audio API, entirely client-side) ----
 
 const MAX_CLIP_SECONDS = 60
@@ -292,7 +341,13 @@ async function selectCard(no){
     const eventId = crypto.randomUUID()
     document.getElementById("msg").innerText = `Đang tạo thiệp...`
     const photoUrl = await uploadPhotoIfAny(eventId)
-    const musicUrl = await uploadMusicIfAny(eventId)
+
+    // YouTube link (if pasted) takes priority over an uploaded file — the two
+    // are presented as alternatives, not something to combine.
+    const youtubeId = extractYoutubeId(document.getElementById("cyoutube").value.trim())
+    const youtubeStart = youtubeId ? (parseInt(document.getElementById("yt-start").value) || 0) : null
+    const youtubeEnd = youtubeId ? (parseInt(document.getElementById("yt-end").value) || null) : null
+    const musicUrl = youtubeId ? null : await uploadMusicIfAny(eventId)
 
     const { error } = await supabaseClient
         .from("events")
@@ -301,7 +356,8 @@ async function selectCard(no){
             card_type: ctype, template_no: templ, host_name: cname, message: ctext,
             event_date: cdate, event_time: ctime, event_time_end: ctimeend, event_location: clocation,
             notes: cnotes, afterparty_note: cafterpartyNote,
-            music_url: musicUrl, photo_url: photoUrl
+            music_url: musicUrl, photo_url: photoUrl,
+            youtube_id: youtubeId, youtube_start: youtubeStart, youtube_end: youtubeEnd
         })
 
     if (error) {

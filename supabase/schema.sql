@@ -22,7 +22,10 @@ create table if not exists events (
   event_location text,
   notes text,                     -- optional logistics notes for guests (parking, traffic, ...)
   afterparty_note text,           -- optional; non-null means an after-party/meal opt-in is offered
-  music_url text,                 -- optional background-music mp3 link
+  music_url text,                 -- optional background-music mp3 link (client-trimmed upload)
+  youtube_id text,                -- optional: play via official YouTube embed instead (no download)
+  youtube_start int,               -- seconds
+  youtube_end int,                 -- seconds
   photo_url text,                 -- optional host-uploaded photo (Supabase Storage public URL)
   is_paid boolean not null default false,
   created_at timestamptz not null default now()
@@ -33,6 +36,9 @@ alter table events add column if not exists music_url text;
 alter table events add column if not exists photo_url text;
 alter table events add column if not exists event_time_end text;
 alter table events add column if not exists notes text;
+alter table events add column if not exists youtube_id text;
+alter table events add column if not exists youtube_start int;
+alter table events add column if not exists youtube_end int;
 alter table events add column if not exists afterparty_note text;
 
 -- one row per guest with a personalized invite link (event_id + guest.id form the link)
@@ -154,6 +160,9 @@ returns table (
   notes text,
   afterparty_note text,
   music_url text,
+  youtube_id text,
+  youtube_start int,
+  youtube_end int,
   photo_url text
 )
 language sql
@@ -161,7 +170,7 @@ security definer
 set search_path = public
 as $$
   select card_type, template_no, host_name, message, event_date, event_time, event_time_end,
-         event_location, notes, afterparty_note, music_url, photo_url
+         event_location, notes, afterparty_note, music_url, youtube_id, youtube_start, youtube_end, photo_url
   from events
   where id = p_event_id;
 $$;

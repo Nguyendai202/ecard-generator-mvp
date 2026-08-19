@@ -161,6 +161,55 @@ function renderMusic(musicUrl){
     })
 }
 
+function renderYoutubeMusic(youtubeId, startSec, endSec){
+    if (!music_ele || !youtubeId) return
+
+    music_ele.innerHTML = `
+        <div id="yt-audio-player" style="width:0;height:0;overflow:hidden"></div>
+        <button id="music-toggle">🔊 Nhạc nền</button>
+    `
+    const btn = document.getElementById("music-toggle")
+    const start = startSec || 0
+    const end = endSec || null
+    let player = null
+    let playing = false
+
+    function checkLoop(){
+        if (player && end && player.getCurrentTime() >= end) {
+            player.seekTo(start, true)
+        }
+        if (playing) setTimeout(checkLoop, 1000)
+    }
+
+    function init(){
+        if (typeof YT === "undefined" || !YT.Player) {
+            setTimeout(init, 300)
+            return
+        }
+        player = new YT.Player("yt-audio-player", {
+            videoId: youtubeId,
+            playerVars: { start, end: end || undefined, controls: 0 },
+            events: {
+                onReady: () => {
+                    btn.addEventListener("click", () => {
+                        if (!playing) {
+                            player.playVideo()
+                            playing = true
+                            btn.textContent = "🔇 Tắt nhạc"
+                            checkLoop()
+                        } else {
+                            player.pauseVideo()
+                            playing = false
+                            btn.textContent = "🔊 Nhạc nền"
+                        }
+                    })
+                }
+            }
+        })
+    }
+    init()
+}
+
 function greetingFor(name, relationship){
     const r = (relationship || "").toLowerCase()
     // Match whole words only (not substrings) — e.g. "ba" must not match inside "ban".
@@ -334,7 +383,11 @@ async function init(){
 
     renderEventInfo(cardDATA[event.card_type]["title"], event.event_date, event.event_time, event.event_time_end, event.event_location, event.notes)
     renderCountdown(event.event_date, event.event_time)
-    renderMusic(event.music_url)
+    if (event.youtube_id) {
+        renderYoutubeMusic(event.youtube_id, event.youtube_start, event.youtube_end)
+    } else {
+        renderMusic(event.music_url)
+    }
     renderWishes()
 }
 

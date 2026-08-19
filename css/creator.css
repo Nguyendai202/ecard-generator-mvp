@@ -94,6 +94,13 @@ label {
   color: #9089a3;
 }
 
+.music-source-box {
+  background: #faf7ff;
+  border: 1px solid #eee3fa;
+  border-radius: 12px;
+  padding: 0.8rem 1rem;
+}
+
 .btn-brand {
   background: linear-gradient(135deg, #8100eb 0%, #b33bff 100%);
   border: none;

@@ -101,23 +101,42 @@
                         </div>
                         <br>
                         <div class="form-group">
-                            <label for="cmusicfile">Nhạc nền (tuỳ chọn, mp3/mp4, tối đa 20MB)</label>
-                            <input type="file" class="form-control" id="cmusicfile" accept="audio/mpeg,audio/mp4,video/mp4">
-                            <p class="form-text-hint mb-0">Không hỗ trợ dán link YouTube (vi phạm điều khoản YouTube). Tải/convert file mp3 ở nơi khác rồi upload vào đây.</p>
-                            <div id="music-trim-ui" style="display:none;margin-top:10px">
-                                <audio id="music-preview" controls style="width:100%"></audio>
-                                <div class="d-flex align-items-center gap-2 mt-2">
-                                    <label class="mb-0" style="white-space:nowrap">Bắt đầu</label>
-                                    <input type="range" id="trim-start" min="0" max="0" value="0" step="0.1" style="flex:1">
-                                    <span id="trim-start-label">0:00</span>
+                            <label>Nhạc nền (tuỳ chọn) — chọn 1 trong 2 cách</label>
+
+                            <div class="music-source-box">
+                                <p class="form-text-hint mb-1"><strong>Cách 1:</strong> Dán link YouTube</p>
+                                <input type="text" class="form-control" id="cyoutube" placeholder="https://www.youtube.com/watch?v=... hoặc https://youtu.be/...">
+                                <div id="youtube-trim-ui" style="display:none;margin-top:10px">
+                                    <div id="youtube-preview" style="max-width:360px;margin:0 auto"></div>
+                                    <div class="d-flex align-items-center gap-2 mt-2">
+                                        <label class="mb-0" style="white-space:nowrap">Bắt đầu (giây)</label>
+                                        <input type="number" min="0" class="form-control" id="yt-start" value="0" style="max-width:100px">
+                                        <label class="mb-0" style="white-space:nowrap">Kết thúc (giây)</label>
+                                        <input type="number" min="1" class="form-control" id="yt-end" value="60" style="max-width:100px">
+                                    </div>
+                                    <a onclick="previewYoutubeTrim()" class="btn btn-sm btn-outline-primary mt-1">▶ Xem thử đoạn đã chọn</a>
                                 </div>
-                                <div class="d-flex align-items-center gap-2">
-                                    <label class="mb-0" style="white-space:nowrap">Kết thúc</label>
-                                    <input type="range" id="trim-end" min="0" max="0" value="0" step="0.1" style="flex:1">
-                                    <span id="trim-end-label">0:00</span>
+                                <p class="form-text-hint mb-0 mt-1">Dùng trình phát YouTube chính thức (nhúng trực tiếp), không tải/rip nhạc — tuân thủ điều khoản của YouTube.</p>
+                            </div>
+
+                            <div class="music-source-box mt-2">
+                                <p class="form-text-hint mb-1"><strong>Cách 2:</strong> Tải file mp3/mp4 lên (tối đa 20MB)</p>
+                                <input type="file" class="form-control" id="cmusicfile" accept="audio/mpeg,audio/mp4,video/mp4">
+                                <div id="music-trim-ui" style="display:none;margin-top:10px">
+                                    <audio id="music-preview" controls style="width:100%"></audio>
+                                    <div class="d-flex align-items-center gap-2 mt-2">
+                                        <label class="mb-0" style="white-space:nowrap">Bắt đầu</label>
+                                        <input type="range" id="trim-start" min="0" max="0" value="0" step="0.1" style="flex:1">
+                                        <span id="trim-start-label">0:00</span>
+                                    </div>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <label class="mb-0" style="white-space:nowrap">Kết thúc</label>
+                                        <input type="range" id="trim-end" min="0" max="0" value="0" step="0.1" style="flex:1">
+                                        <span id="trim-end-label">0:00</span>
+                                    </div>
+                                    <a onclick="previewTrim()" class="btn btn-sm btn-outline-primary mt-1">▶ Nghe thử đoạn đã chọn</a>
+                                    <p class="form-text-hint mb-0">Đoạn cắt tối đa 60 giây, sẽ tự động cắt khi bạn tạo thiệp.</p>
                                 </div>
-                                <a onclick="previewTrim()" class="btn btn-sm btn-outline-primary mt-1">▶ Nghe thử đoạn đã chọn</a>
-                                <p class="form-text-hint mb-0">Đoạn cắt tối đa 60 giây, sẽ tự động cắt khi bạn tạo thiệp.</p>
                             </div>
                         </div>
                         <br>
@@ -183,6 +202,7 @@
 		></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+        <script src="https://www.youtube.com/iframe_api"></script>
         <script src="./path.js"></script>
         <script src="./js/wishSuggestions.js"></script>
         <script src="./js/config.js"></script>
