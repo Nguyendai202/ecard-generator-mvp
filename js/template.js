@@ -16,11 +16,13 @@ const guestId = urlParams.get('guest')
 
 const TYPE_ICONS = { graduation: "🎓", birthday: "🎂", anniversary: "💐", thankyou: "🙏" }
 
-// Set by renderMusic()/renderYoutubeMusic() once the music source is ready.
-// Tapping the card to open it is a real user gesture, so calling this from
-// inside that same click handler is what lets the browser allow autoplay
-// with sound — a later, unrelated call (e.g. on a timer) would be blocked.
-let startMusicFn = null
+// Set by renderMusic()/renderYoutubeMusic() once the music source is ready,
+// as { play, pause }. Tapping the card is a real user gesture, so calling
+// play() from inside that same click handler is what lets the browser allow
+// autoplay with sound — a later, unrelated call (e.g. on a timer) would be
+// blocked. Tied to the card's open/closed state (not "only the first tap")
+// so re-opening the card after closing it resumes the music too.
+let musicControls = null
 
 function renderCard(utype, utempl, uname, utext, photoUrl){
     const clist = Object.values(cardDATA[utype]["img"])
@@ -49,12 +51,10 @@ function renderCard(utype, utempl, uname, utext, photoUrl){
             // nudge the guest to scroll once the flip animation settles.
             setTimeout(() => document.getElementById("scroll-hint").classList.add("visible"), 3000)
 
-            if (startMusicFn) {
-                startMusicFn()
-                startMusicFn = null // only auto-start once, on the opening tap
-            }
+            musicControls?.play()
         } else {
             document.getElementById("scroll-hint").classList.remove("visible")
+            musicControls?.pause()
         }
     })
 
@@ -172,7 +172,10 @@ function renderMusic(musicUrl){
         if (audio.paused) audio.play(); else audio.pause()
     })
 
-    startMusicFn = () => audio.play().catch(() => {})
+    musicControls = {
+        play: () => audio.play().catch(() => {}),
+        pause: () => audio.pause()
+    }
 }
 
 function renderYoutubeMusic(youtubeId, startSec, endSec){
@@ -201,7 +204,12 @@ function renderYoutubeMusic(youtubeId, startSec, endSec){
         player.playVideo()
     }
 
-    startMusicFn = startPlaying
+    function stopPlaying(){
+        autoplayPending = false
+        if (player) player.pauseVideo()
+    }
+
+    musicControls = { play: startPlaying, pause: stopPlaying }
 
     function init(){
         if (typeof YT === "undefined" || !YT.Player) {
