@@ -139,11 +139,11 @@ body {
   justify-content: center;
   overflow: hidden;
 }
-.page:hover .page__1, .page.flipped .page__1 {
+.page.flipped .page__1 {
   transform: rotateY(-180deg);
   box-shadow: 1.5rem 2rem 3rem rgba(0, 0, 0, 0.25);
 }
-.page:hover .page__1::after, .page:hover .page__1::before, .page.flipped .page__1::after, .page.flipped .page__1::before {
+.page.flipped .page__1::after, .page.flipped .page__1::before {
   opacity: 1;
 }
 
@@ -155,6 +155,33 @@ body {
   opacity: 0.3;
 }
 
+#open-card-btn {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 3;
+  background: linear-gradient(135deg, #8100eb, #b33bff);
+  color: #fff;
+  border: none;
+  padding: 0.6rem 1.4rem;
+  border-radius: 999px;
+  font-family: "Poppins", sans-serif;
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+  animation: pulse-open-btn 1.6s infinite;
+}
+
+@keyframes pulse-open-btn {
+  0%, 100% {
+    transform: translateX(-50%) scale(1);
+  }
+  50% {
+    transform: translateX(-50%) scale(1.06);
+  }
+}
 .photo-badge {
   display: none;
   width: 84px;
@@ -394,11 +421,11 @@ body {
     justify-content: center;
     overflow: hidden;
   }
-  .page:hover .page__1, .page.flipped .page__1 {
+  .page.flipped .page__1 {
     transform: rotateY(-180deg);
     box-shadow: 1.5rem 2rem 3rem rgba(0, 0, 0, 0.25);
   }
-  .page:hover .page__1::after, .page:hover .page__1::before, .page.flipped .page__1::after, .page.flipped .page__1::before {
+  .page.flipped .page__1::after, .page.flipped .page__1::before {
     opacity: 1;
   }
   .type-icon {

@@ -144,13 +144,17 @@ body{
 		overflow: hidden;
 	}
 
-	&:hover &__1,
+	// Deliberately no &:hover trigger here — only the JS-driven .flipped
+	// class (real tap on .page) opens the card. Mobile browsers can apply
+	// :hover from an incidental touch near the card and hold it for the
+	// full transition, which looked like the card "opening itself" after a
+	// few seconds — and since that isn't a real click event, the music
+	// autoplay tied to the tap handler never fires either.
 	&.flipped &__1 {
 		transform: rotateY(-180deg);
 		box-shadow: 1.5rem 2rem 3rem rgba(#000, 0.25);
 
 		&::after, &::before {
-			// Back of 1st page hover
 			opacity: 1;
 		}
 	}
@@ -170,6 +174,30 @@ body{
 	right: 16px;
 	font-size: 2rem;
 	opacity: 0.3;
+}
+
+#open-card-btn {
+	position: absolute;
+	bottom: 20px;
+	left: 50%;
+	transform: translateX(-50%);
+	z-index: 3;
+	background: linear-gradient(135deg, #8100eb, #b33bff);
+	color: #fff;
+	border: none;
+	padding: 0.6rem 1.4rem;
+	border-radius: 999px;
+	font-family: 'Poppins', sans-serif;
+	font-weight: 600;
+	font-size: 0.85rem;
+	cursor: pointer;
+	box-shadow: 0 4px 14px rgba(#000, 0.25);
+	animation: pulse-open-btn 1.6s infinite;
+}
+
+@keyframes pulse-open-btn {
+	0%, 100% { transform: translateX(-50%) scale(1); }
+	50% { transform: translateX(-50%) scale(1.06); }
 }
 
 .photo-badge {
