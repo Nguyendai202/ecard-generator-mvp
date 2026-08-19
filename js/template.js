@@ -41,7 +41,7 @@ function renderCard(utype, utempl, uname, utext, photoUrl){
         if (nowOpen) {
             // Everything below the card (RSVP, guestbook...) is easy to miss —
             // nudge the guest to scroll once the flip animation settles.
-            setTimeout(() => document.getElementById("scroll-hint").classList.add("visible"), 900)
+            setTimeout(() => document.getElementById("scroll-hint").classList.add("visible"), 3000)
         } else {
             document.getElementById("scroll-hint").classList.remove("visible")
         }

@@ -81,6 +81,15 @@ create table if not exists wishes (
   created_at timestamptz not null default now()
 );
 
+-- short, shareable links: code -> relative path (e.g. "templates/1.html?event=...&guest=...").
+-- Purely cosmetic (hides the long uuid-bearing URL when sharing on Zalo/Messenger);
+-- the security model still rests on the target's own uuid, not the code's secrecy.
+create table if not exists short_links (
+  code text primary key,
+  target text not null,
+  created_at timestamptz not null default now()
+);
+
 create index if not exists idx_guests_event_id on guests(event_id);
 create index if not exists idx_rsvps_event_id on rsvps(event_id);
 create index if not exists idx_wishes_event_id on wishes(event_id);
@@ -106,6 +115,7 @@ alter table events enable row level security;
 alter table guests enable row level security;
 alter table rsvps enable row level security;
 alter table wishes enable row level security;
+alter table short_links enable row level security;
 
 drop policy if exists "anyone can create event" on events;
 create policy "anyone can create event"
@@ -141,6 +151,14 @@ create policy "anyone can add a wish"
 -- it must stay scoped to ONE event — a blanket select policy would let
 -- anyone dump every wish written on every event ever created. Reads go
 -- through get_wishes(event_id) below instead.
+
+drop policy if exists "anyone can create short link" on short_links;
+create policy "anyone can create short link"
+  on short_links for insert
+  with check (true);
+
+-- no select policy on short_links: reads via resolve_short_link() only, so
+-- the whole mapping table can't be dumped in one request either.
 
 -- ============================================================
 -- RPC functions (SECURITY DEFINER, always filtered by an exact id)
@@ -228,15 +246,26 @@ as $$
   limit 100;
 $$;
 
+create or replace function resolve_short_link(p_code text)
+returns table (target text)
+language sql
+security definer
+set search_path = public
+as $$
+  select target from short_links where code = p_code;
+$$;
+
 revoke all on function get_event(uuid) from public;
 revoke all on function get_guest(uuid) from public;
 revoke all on function submit_guest_rsvp(uuid, text, boolean) from public;
 revoke all on function get_wishes(uuid) from public;
+revoke all on function resolve_short_link(text) from public;
 
 grant execute on function get_event(uuid) to anon, authenticated;
 grant execute on function get_guest(uuid) to anon, authenticated;
 grant execute on function submit_guest_rsvp(uuid, text, boolean) to anon, authenticated;
 grant execute on function get_wishes(uuid) to anon, authenticated;
+grant execute on function resolve_short_link(text) to anon, authenticated;
 
 -- ============================================================
 -- Storage: public bucket for host-uploaded photos

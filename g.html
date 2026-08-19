@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đang mở thiệp...</title>
+    <style>
+        body { font-family: 'Poppins', sans-serif; display:flex; align-items:center; justify-content:center; height:100vh; margin:0; background:#f3e8ff; color:#5b5470; }
+    </style>
+</head>
+<body>
+    <p id="msg">Đang mở thiệp...</p>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="./js/config.js"></script>
+    <script src="./js/supabase-client.js"></script>
+    <script>
+        (async () => {
+            const code = new URLSearchParams(window.location.search).get("c")
+            if (!code || !supabaseClient) {
+                document.getElementById("msg").textContent = "Link không hợp lệ."
+                return
+            }
+            const { data, error } = await supabaseClient.rpc("resolve_short_link", { p_code: code }).single()
+            if (error || !data || !data.target) {
+                document.getElementById("msg").textContent = "Không tìm thấy thiệp này."
+                return
+            }
+            window.location.replace(new URL(data.target, window.location.href).href)
+        })()
+    </script>
+</body>
+</html>

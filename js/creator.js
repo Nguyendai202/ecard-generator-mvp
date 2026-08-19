@@ -93,6 +93,34 @@ document.getElementById("cphoto").addEventListener("change", function(){
     preview.style.display = ""
 })
 
+function randomShortCode(len){
+    // Avoid visually ambiguous characters (0/O, 1/l/I) since these get read
+    // aloud or retyped from a screen.
+    const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789"
+    const bytes = new Uint8Array(len)
+    crypto.getRandomValues(bytes)
+    return Array.from(bytes, b => chars[b % chars.length]).join("")
+}
+
+// Creates a short "g.html?c=XXXXXXX" alias for a long templates/1.html?... link,
+// so it's tidy to paste into Zalo/Messenger. Purely cosmetic — the actual
+// access control still lives on the target event/guest uuid, not the code.
+async function createShortLink(targetPath){
+    if (!supabaseClient) return null
+    for (let attempt = 0; attempt < 3; attempt++) {
+        const code = randomShortCode(7)
+        const { error } = await supabaseClient.from("short_links").insert({ code, target: targetPath })
+        if (!error) return code
+    }
+    return null
+}
+
+async function shortenOrFallback(targetPath){
+    const code = await createShortLink(targetPath)
+    const path = code ? `g.html?c=${code}` : targetPath
+    return new URL(path, window.location.href).href
+}
+
 async function uploadPhotoIfAny(eventId){
     const file = document.getElementById("cphoto").files[0]
     if (!file || !supabaseClient) return null
@@ -368,7 +396,7 @@ async function selectCard(no){
 
     if (guests_input.length === 0) {
         singleLinkBlock.style.display = ""
-        const temp = new URL(`templates/1.html?event=${eventId}`, window.location.href).href
+        const temp = await shortenOrFallback(`templates/1.html?event=${eventId}`)
         showSingleLink(temp)
         document.getElementById("msg").innerText = `Đã chọn Mẫu ${templ + 1}. Gửi link hoặc mã QR cho người nhận nhé!`
         return
@@ -388,15 +416,32 @@ async function selectCard(no){
         return
     }
 
-    guestLinkList.innerHTML = `<p>Mỗi khách có 1 link riêng, tên tự điền sẵn:</p>` + guests.map(g => {
-        const link = new URL(`templates/1.html?event=${eventId}&guest=${g.id}`, window.location.href).href
-        return `
-            <div class="input-group mb-2">
-                <span class="input-group-text">${g.guest_name}</span>
-                <input type="text" class="form-control" readonly value="${link}">
-                <button class="btn btn-outline-secondary" type="button" onclick="navigator.clipboard.writeText('${link}')">Sao chép</button>
-            </div>`
-    }).join("")
+    guestLinkList.innerHTML = `<p>Mỗi khách có 1 link riêng, tên tự điền sẵn:</p>`
+    for (const g of guests) {
+        const link = await shortenOrFallback(`templates/1.html?event=${eventId}&guest=${g.id}`)
+
+        const row = document.createElement("div")
+        row.className = "input-group mb-2"
+
+        const nameSpan = document.createElement("span")
+        nameSpan.className = "input-group-text"
+        nameSpan.textContent = g.guest_name
+
+        const linkInput = document.createElement("input")
+        linkInput.type = "text"
+        linkInput.className = "form-control"
+        linkInput.readOnly = true
+        linkInput.value = link
+
+        const copyBtn = document.createElement("button")
+        copyBtn.className = "btn btn-outline-secondary"
+        copyBtn.type = "button"
+        copyBtn.textContent = "Sao chép"
+        copyBtn.addEventListener("click", () => navigator.clipboard.writeText(link))
+
+        row.append(nameSpan, linkInput, copyBtn)
+        guestLinkList.appendChild(row)
+    }
 
     document.getElementById("msg").innerText = `Đã chọn Mẫu ${templ + 1}. Gửi link riêng cho từng khách ở trên.`
 }
