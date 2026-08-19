@@ -155,22 +155,8 @@ function renderCountdown(dateStr, timeStr){
 
 function renderMusic(musicUrl){
     if (!music_ele || !musicUrl) return
-    music_ele.innerHTML = `
-        <audio id="bg-audio" src="${musicUrl}" loop></audio>
-        <button id="music-toggle">🔊 Nhạc nền</button>
-    `
+    music_ele.innerHTML = `<audio id="bg-audio" src="${musicUrl}" loop></audio>`
     const audio = document.getElementById("bg-audio")
-    const btn = document.getElementById("music-toggle")
-
-    // Button text always reflects the audio element's real state, whether
-    // playback started from the auto-open tap, the button itself, or got
-    // blocked by the browser (in which case it just stays "🔊 Nhạc nền").
-    audio.addEventListener("play", () => btn.textContent = "🔇 Tắt nhạc")
-    audio.addEventListener("pause", () => btn.textContent = "🔊 Nhạc nền")
-
-    btn.addEventListener("click", () => {
-        if (audio.paused) audio.play(); else audio.pause()
-    })
 
     musicControls = {
         play: () => audio.play().catch(() => {}),
@@ -181,11 +167,7 @@ function renderMusic(musicUrl){
 function renderYoutubeMusic(youtubeId, startSec, endSec){
     if (!music_ele || !youtubeId) return
 
-    music_ele.innerHTML = `
-        <div id="yt-audio-player" style="width:0;height:0;overflow:hidden"></div>
-        <button id="music-toggle">🔊 Nhạc nền</button>
-    `
-    const btn = document.getElementById("music-toggle")
+    music_ele.innerHTML = `<div id="yt-audio-player" style="width:0;height:0;overflow:hidden"></div>`
     const start = startSec || 0
     const end = endSec || null
     let player = null
@@ -221,19 +203,14 @@ function renderYoutubeMusic(youtubeId, startSec, endSec){
             playerVars: { start, end: end || undefined, controls: 0 },
             events: {
                 onReady: () => {
-                    btn.addEventListener("click", () => {
-                        if (!playing) player.playVideo(); else player.pauseVideo()
-                    })
                     if (autoplayPending) player.playVideo()
                 },
                 onStateChange: (e) => {
                     if (e.data === YT.PlayerState.PLAYING) {
                         playing = true
-                        btn.textContent = "🔇 Tắt nhạc"
                         checkLoop()
                     } else if (e.data === YT.PlayerState.PAUSED || e.data === YT.PlayerState.ENDED) {
                         playing = false
-                        btn.textContent = "🔊 Nhạc nền"
                     }
                 }
             }
@@ -402,6 +379,21 @@ async function init(){
         return
     }
 
+    // Render everything that doesn't need another network round-trip first,
+    // in particular the music setup (musicControls) — renderCard() wires the
+    // opening tap straight to musicControls.play(), so if that tap can
+    // happen before this runs (e.g. while we're still awaiting get_guest
+    // below), the first tap opens the card but the music call is a silent
+    // no-op and the guest has to tap again.
+    renderEventInfo(cardDATA[event.card_type]["title"], event.event_date, event.event_time, event.event_time_end, event.event_location, event.notes)
+    renderCountdown(event.event_date, event.event_time)
+    if (event.youtube_id) {
+        renderYoutubeMusic(event.youtube_id, event.youtube_start, event.youtube_end)
+    } else {
+        renderMusic(event.music_url)
+    }
+    renderWishes()
+
     renderCard(event.card_type, event.template_no, event.host_name, event.message, event.photo_url)
 
     if (guestId) {
@@ -412,15 +404,6 @@ async function init(){
     } else {
         renderRsvpGeneric(event.afterparty_note)
     }
-
-    renderEventInfo(cardDATA[event.card_type]["title"], event.event_date, event.event_time, event.event_time_end, event.event_location, event.notes)
-    renderCountdown(event.event_date, event.event_time)
-    if (event.youtube_id) {
-        renderYoutubeMusic(event.youtube_id, event.youtube_start, event.youtube_end)
-    } else {
-        renderMusic(event.music_url)
-    }
-    renderWishes()
 }
 
 init()
