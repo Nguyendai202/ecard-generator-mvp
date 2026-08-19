@@ -372,6 +372,7 @@ async function selectCard(no){
     // rows — see supabase/schema.sql), and Postgres requires a SELECT policy to
     // satisfy RETURNING, so RETURNING would make every insert fail RLS.
     const eventId = crypto.randomUUID()
+    const ownerToken = crypto.randomUUID()
     document.getElementById("msg").innerText = `Đang tạo thiệp...`
     const photoUrl = await uploadPhotoIfAny(eventId)
 
@@ -385,7 +386,7 @@ async function selectCard(no){
     const { error } = await supabaseClient
         .from("events")
         .insert({
-            id: eventId,
+            id: eventId, owner_token: ownerToken,
             card_type: ctype, template_no: templ, host_name: cname, message: ctext,
             event_date: cdate, event_time: ctime, event_time_end: ctimeend, event_location: clocation,
             notes: cnotes, afterparty_note: cafterpartyNote,
@@ -398,6 +399,8 @@ async function selectCard(no){
         console.error(error)
         return
     }
+
+    await showDashboardLink(eventId, ownerToken)
 
     if (guests_input.length === 0) {
         singleLinkBlock.style.display = ""
@@ -462,6 +465,42 @@ function showSingleLink(temp){
         element: document.getElementById('qr'),
         value: temp
     });
+}
+
+async function showDashboardLink(eventId, ownerToken){
+    const block = document.getElementById("dashboard-link-block")
+    if (!block) return
+
+    const link = new URL(`dashboard.html?event=${eventId}&token=${ownerToken}`, window.location.href).href
+    block.innerHTML = ""
+
+    const warn = document.createElement("p")
+    warn.className = "form-text-hint mb-1"
+    warn.innerHTML = "⚠️ Link này để <strong>riêng bạn</strong> xem ai đã xác nhận tham dự và lời chúc — đừng gửi cho khách."
+
+    const row = document.createElement("div")
+    row.className = "input-group mb-2"
+
+    const linkInput = document.createElement("input")
+    linkInput.type = "text"
+    linkInput.className = "form-control"
+    linkInput.readOnly = true
+    linkInput.value = link
+
+    const copyBtn = document.createElement("button")
+    copyBtn.className = "btn btn-outline-secondary"
+    copyBtn.type = "button"
+    copyBtn.textContent = "Sao chép"
+    copyBtn.addEventListener("click", () => navigator.clipboard.writeText(link))
+
+    const openBtn = document.createElement("a")
+    openBtn.href = link
+    openBtn.target = "_blank"
+    openBtn.className = "btn-brand mt-1 d-inline-block"
+    openBtn.textContent = "📋 Mở trang quản lý thiệp"
+
+    row.append(linkInput, copyBtn)
+    block.append(warn, row, openBtn)
 }
 
 /*

@@ -255,17 +255,73 @@ as $$
   select target from short_links where code = p_code;
 $$;
 
+-- Dashboard for the host: everyone else's read access is scoped by an id
+-- alone (get_event/get_guest/get_wishes), because those rows are meant to
+-- be visible to anyone holding that one link. The dashboard is different —
+-- it's the AGGREGATE view across every guest/rsvp/wish for an event, so it
+-- must check the event's owner_token (a second, separate secret the host
+-- alone receives at creation time) before returning anything.
+create or replace function get_dashboard(p_event_id uuid, p_owner_token uuid)
+returns json
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_owner_token uuid;
+  result json;
+begin
+  select owner_token into v_owner_token from events where id = p_event_id;
+
+  if v_owner_token is null or v_owner_token != p_owner_token then
+    return null;
+  end if;
+
+  select json_build_object(
+    'event', (
+      select row_to_json(e) from (
+        select card_type, host_name, message, event_date, event_time, event_time_end,
+               event_location, afterparty_note
+        from events where id = p_event_id
+      ) e
+    ),
+    'guests', (
+      select coalesce(json_agg(row_to_json(g)), '[]') from (
+        select guest_name, relationship, status, join_afterparty
+        from guests where event_id = p_event_id order by created_at
+      ) g
+    ),
+    'rsvps', (
+      select coalesce(json_agg(row_to_json(r)), '[]') from (
+        select guest_name, status, join_afterparty
+        from rsvps where event_id = p_event_id order by created_at
+      ) r
+    ),
+    'wishes', (
+      select coalesce(json_agg(row_to_json(w)), '[]') from (
+        select guest_name, message, created_at
+        from wishes where event_id = p_event_id order by created_at desc
+      ) w
+    )
+  ) into result;
+
+  return result;
+end;
+$$;
+
 revoke all on function get_event(uuid) from public;
 revoke all on function get_guest(uuid) from public;
 revoke all on function submit_guest_rsvp(uuid, text, boolean) from public;
 revoke all on function get_wishes(uuid) from public;
 revoke all on function resolve_short_link(text) from public;
+revoke all on function get_dashboard(uuid, uuid) from public;
 
 grant execute on function get_event(uuid) to anon, authenticated;
 grant execute on function get_guest(uuid) to anon, authenticated;
 grant execute on function submit_guest_rsvp(uuid, text, boolean) to anon, authenticated;
 grant execute on function get_wishes(uuid) to anon, authenticated;
 grant execute on function resolve_short_link(text) to anon, authenticated;
+grant execute on function get_dashboard(uuid, uuid) to anon, authenticated;
 
 -- ============================================================
 -- Storage: public bucket for host-uploaded photos
