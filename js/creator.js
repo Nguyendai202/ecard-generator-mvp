@@ -115,6 +115,11 @@ async function createShortLink(targetPath){
     return null
 }
 
+// Tried is.gd (CORS-blocked from a browser) and TinyURL's legacy API (CORS
+// works, but every link it creates now routes through an interstitial
+// "preview/deprecated" warning page — confusing for a guest who just wants
+// to open an invite). Neither is usable, so this stays self-hosted: our own
+// short_links table + g.html redirector, no third party involved.
 async function shortenOrFallback(targetPath){
     const code = await createShortLink(targetPath)
     const path = code ? `g.html?c=${code}` : targetPath
