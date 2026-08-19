@@ -24,14 +24,23 @@ function renderWishSuggestions(){
 
     let lastRegion = null
     box.innerHTML = `<small class="text-muted d-block mb-1">Gợi ý lời chúc (bấm để dùng):</small>` +
-        suggestions.map(s => {
+        suggestions.map((s, i) => {
             const regionLabel = s.region && s.region !== lastRegion
                 ? `<span class="d-block text-muted mt-1" style="font-size:0.75rem">${s.region}</span>`
                 : ""
             lastRegion = s.region
-            const escaped = s.text.replace(/'/g, "\\'")
-            return `${regionLabel}<a class="me-1 mb-1 d-inline-block px-2 py-1" style="cursor:pointer;font-weight:normal;font-size:0.8rem;text-decoration:none;color:#333;background:#f1f3f5;border:1px solid #dee2e6;border-radius:14px" onmouseover="this.style.background='#e7e0fb'" onmouseout="this.style.background='#f1f3f5'" onclick="document.getElementById('ctext').value='${escaped}'">${s.text}</a>`
+            return `${regionLabel}<a data-idx="${i}" class="wish-chip me-1 mb-1 d-inline-block px-2 py-1" style="cursor:pointer;font-weight:normal;font-size:0.8rem;text-decoration:none;color:#333;background:#f1f3f5;border:1px solid #dee2e6;border-radius:14px"></a>`
         }).join("")
+
+    // Set text via textContent (not innerHTML/attribute) so quotes, emoji,
+    // and any other characters in the suggestion never need escaping.
+    box.querySelectorAll(".wish-chip").forEach(chip => {
+        const s = suggestions[Number(chip.dataset.idx)]
+        chip.textContent = s.text
+        chip.addEventListener("mouseover", () => chip.style.background = "#e7e0fb")
+        chip.addEventListener("mouseout", () => chip.style.background = "#f1f3f5")
+        chip.addEventListener("click", () => { document.getElementById("ctext").value = s.text })
+    })
 }
 
 ctype.addEventListener("change", renderWishSuggestions)
