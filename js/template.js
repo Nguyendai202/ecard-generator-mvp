@@ -37,7 +37,21 @@ function renderCard(utype, utempl, uname, utext, photoUrl){
     // Hover only works with a mouse — tap-to-flip so phones (how guests will
     // actually open this link) can open the card and reach the RSVP form.
     document.querySelector(".page").addEventListener("click", function(){
-        this.classList.toggle("flipped")
+        const nowOpen = this.classList.toggle("flipped")
+        if (nowOpen) {
+            // Everything below the card (RSVP, guestbook...) is easy to miss —
+            // nudge the guest to scroll once the flip animation settles.
+            setTimeout(() => document.getElementById("scroll-hint").classList.add("visible"), 900)
+        } else {
+            document.getElementById("scroll-hint").classList.remove("visible")
+        }
+    })
+
+    window.addEventListener("scroll", function onScroll(){
+        if (window.scrollY > 40) {
+            document.getElementById("scroll-hint").classList.remove("visible")
+            window.removeEventListener("scroll", onScroll)
+        }
     })
 }
 
